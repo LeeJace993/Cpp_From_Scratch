@@ -6297,23 +6297,38 @@ function runPickOp(kind,v,onDone){
     let si=0;
     const renderScen=()=>{
       const sc=op.scens[si];let got=0;const need=sc.cards.length;
-      v.innerHTML='<div class="op-caption">'+ESC(sc.cap)+' · 逐张判定：发生的亮绿，没发生的亮红</div><div class="fcards" id="pp-cards">'+sc.cards.map((cd,k)=>'<button class="fcard" data-k="'+k+'" style="cursor:pointer;text-align:left"><div style="font-family:var(--f-body)">'+ESC(cd.t)+'</div></button>').join("")+'</div><div class="op-caption" id="pp-cap">场景 '+(si+1)+' / '+op.scens.length+' · 已判定 0 / '+need+'</div>';
-      $$("#pp-cards .fcard").forEach(c=>{c.onclick=()=>{
-        if(c.disabled)return;
-        const cd=sc.cards[+c.dataset.k];c.disabled=true;c.style.borderColor=cd.ok?"var(--green)":"var(--red)";
-        speak((cd.ok?"真的发生了——":"没有发生——")+cd.why);
-        got++;
-        $("#pp-cap").textContent="场景 "+(si+1)+" / "+op.scens.length+" · 已判定 "+got+" / "+need;
-        if(got===need){
-          si++;
-          if(si<op.scens.length){
-            const nx=document.createElement("button");nx.className="btn";nx.style.marginTop="12px";nx.textContent="下一个场景 ▶";
-            nx.onclick=()=>{sfx("page");renderScen()};v.appendChild(nx);
-          }else{
-            $("#pp-cap").textContent=op.done;speak(op.done);if(onDone)onDone({ok:true});
+      v.innerHTML='<div class="op-caption">'+ESC(sc.cap)+' · 先判断每条事件发生与否，答对才锁定</div>'+
+        '<div class="fcards" id="pp-cards">'+sc.cards.map((cd,k)=>
+          '<div class="fcard" data-k="'+k+'"><div style="font-family:var(--f-body)">'+ESC(cd.t)+'</div>'+
+          '<div class="lesson-tools"><button class="btn ghost small" data-pick="1">发生</button><button class="btn ghost small" data-pick="0">不发生</button></div>'+
+          '<div class="small dim" aria-live="polite"></div></div>').join("")+'</div>'+
+        '<div class="op-caption" id="pp-cap">场景 '+(si+1)+' / '+op.scens.length+' · 已正确判定 0 / '+need+'</div>';
+      $$("#pp-cards .fcard").forEach(card=>{
+        const cd=sc.cards[+card.dataset.k],buttons=[...card.querySelectorAll("[data-pick]")];
+        buttons.forEach(btn=>btn.onclick=()=>{
+          if(card.dataset.done)return;
+          const chosen=btn.dataset.pick==="1";
+          if(chosen!==!!cd.ok){
+            sfx("bad");card.style.borderColor="var(--red)";
+            card.querySelector(".small").textContent="还不对，请重新判断";
+            stepSpeakInstant("思考这条规则："+(sc.help||op.hint||"先在脑中追踪代码执行到哪里，再决定是否发生。"));
+            return;
           }
-        }
-      }});
+          card.dataset.done="1";buttons.forEach(x=>x.disabled=true);card.style.borderColor="var(--green)";
+          card.querySelector(".small").textContent="✓ "+(cd.ok?"确实发生":"确实没有发生");
+          sfx("good");stepSpeakInstant(cd.why);got++;
+          $("#pp-cap").textContent="场景 "+(si+1)+" / "+op.scens.length+" · 已正确判定 "+got+" / "+need;
+          if(got===need){
+            si++;
+            if(si<op.scens.length){
+              const nx=document.createElement("button");nx.className="btn";nx.style.marginTop="12px";nx.textContent="下一个场景 ▶";
+              nx.onclick=()=>{sfx("page");renderScen()};v.appendChild(nx);
+            }else{
+              $("#pp-cap").textContent=op.done;stepSpeakInstant(op.done);if(onFix)onFix({ok:true});
+            }
+          }
+        });
+      });
     };
     renderScen();return;
   }
