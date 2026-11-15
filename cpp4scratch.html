@@ -4804,19 +4804,19 @@ function chReady(i){
 function renderCampus(){
   updateStatus();showScreen("scr-campus");
   const ni=nextChapterIdx();
-  const examReady=ni>=0&&chReady(ni);
+  const examReady=ni>=0;
   const labReady=CH_LESSONS.some((g,ci)=>g.some(l=>((SAVE[lessonKey(ci)]||{})[l.id]||{}).done));
   const grad=passedCount()>=LEVELS.length;
   const BL=[
-   {ic:"教",nm:"教学楼",ds:ni<0?"十三门考核全部通过。去礼堂。":"第 "+(ni+1)+" 章「"+LEVELS[ni].name+"」进行中"+(SAVE.done[LEVELS[ni].id]?"":"(未通过考核)"),go:()=>{renderChapters();showScreen("scr-campus")}},
-   {ic:"考",nm:"考场",ds:examReady?"第 "+(ni+1)+" 章考核已就绪(5 题,对 4 过)":ni<0?"全部通过":"先把「"+LEVELS[ni].name+"」的课上完再来",go:()=>{if(ni<0){sfx("bad");return}if(!chReady(ni)){sfx("bad");return}sfx("click");startExam(ni)},lock:!examReady},
+   {ic:"教",nm:"教学楼",ds:ni<0?"十三章全部通过。去礼堂。":"第 "+(ni+1)+" 章「"+LEVELS[ni].name+"」进行中"+(SAVE.done[LEVELS[ni].id]?"":"(未通过考核)"),go:()=>{renderChapters();showScreen("scr-campus")}},
+   {ic:"考",nm:"考场",ds:examReady?"第 "+(ni+1)+" 章考核已就绪(5 题,对 4 过)":ni<0?"全部通过":"先把「"+LEVELS[ni].name+"」的课上完再来",go:()=>{if(ni<0){sfx("bad");return}sfx("click");startExam(ni)},lock:!examReady},
    {ic:"实",nm:"实验室",ds:labReady?"回放已上章节的实验工具：展开 include、链接器拼装、副本视图、逐步执行、sizeof 视图等":"上完第一章的课,这里开放实验工具",go:()=>{if(!labReady){sfx("bad");return}sfx("click");renderLab()},lock:!labReady},
    {ic:"师",nm:"教授办公室",ds:SAVE.miscon.length?"你有 "+SAVE.miscon.length+" 条误区档案在等补课":"带着错题来敲门——现在档案还是空的",go:()=>{sfx("click");renderOffice()}},
    {ic:"馆",nm:"图书馆",ds:"误区笔记本 · 掌握度一览",go:()=>{sfx("click");renderLibrary()}},
-   {ic:"礼",nm:"大礼堂",ds:grad?"毕业典礼!":"修满 13 门考核后来这里毕业",go:()=>{if(!grad){sfx("bad");return}sfx("win");renderCeremony()},lock:!grad}];
+   {ic:"礼",nm:"大礼堂",ds:grad?"毕业典礼!":"13 章全部通过后来这里毕业",go:()=>{if(!grad){sfx("bad");return}sfx("win");renderCeremony()},lock:!grad}];
   $("#scr-campus").innerHTML=
    '<div class="disp" style="font-size:10px;color:var(--cyan);letter-spacing:2px;margin:0 0 14px">CAMPUS · 校园</div>'+
-   '<div class="panel" style="padding:12px 16px;font-size:14px">欢迎回来,<b>'+ESC(SAVE.name)+'</b>。'+(ni<0?"全部考核通过——去大礼堂吧。":"当前进度:第 "+(ni+1)+" 章「"+LEVELS[ni].name+"」。")+"</div>"+
+   '<div class="panel" style="padding:12px 16px;font-size:14px">欢迎回来,<b>'+ESC(SAVE.name)+'</b>。'+(ni<0?"全部章节通过——去大礼堂吧。":"当前进度:第 "+(ni+1)+" 章「"+LEVELS[ni].name+"」。")+"</div>"+
    '<div class="campus">'+BL.map((b,k)=>'<div class="bld'+(b.lock?" locked":"")+'" data-k="'+k+'"><div class="bflag">'+(b.lock?"未开放":"OPEN")+'</div><div class="bico">'+b.ic+'</div><div class="bnm">'+b.nm+'</div><div class="bds">'+b.ds+"</div></div>").join("")+"</div>";
   $$("#scr-campus .bld").forEach(el=>{el.onclick=()=>BL[+el.dataset.k].go()});
 }
@@ -4824,14 +4824,14 @@ function renderCampus(){
 function renderChapters(){
   updateStatus();
   let h='<div class="disp" style="font-size:10px;color:var(--cyan);letter-spacing:2px;margin:0 0 14px">COURSE · 课程表</div>';
-  h+='<div class="panel" style="padding:12px 16px;font-size:14px">每一章:教授带课(互动/带做)→ <b>章节考核</b>(独立做,对 4/5 过)。考核通过才开下一章。回上一站 <button class="btn ghost small" id="bt-back-campus">校园</button></div><div class="lvl">';
+  h+='<div class="panel" style="padding:12px 16px;font-size:14px">每章可以直接完成代码挑战，或直接做五题考核（对 4 过），通过任一方式就开放下一章。四节互动课保留，可自由学习。回上一站 <button class="btn ghost small" id="bt-back-campus">校园</button></div><div class="lvl">';
   LEVELS.forEach((l,i)=>{
     const un=i===0||!!SAVE.done[LEVELS[i-1].id],st=SAVE.done[l.id]||0;
-    const ready=chReady(i)&&!st;
+    const ready=!st;
     h+='<div class="node'+(un?"":" locked")+(st?" done":"")+'"><div class="rail"><div class="dot">'+(st?"✓":String(i+1).padStart(2,"0"))+'</div><div class="wire"></div></div>'+
       '<div class="card" data-i="'+i+'"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><span class="nm">'+(i+1)+". "+l.name+'</span><span class="stars">'+(st?("★".repeat(st)+"☆".repeat(3-st)):"")+'</span></div>'+
       '<div><span class="tag">'+l.ch+'</span>'+(ready?'<span class="tag gold">考核已就绪</span>':"")+"</div>"+
-      '<div class="small dim" style="margin-top:4px">'+(st?"已通过考核,可回炉重修。":(un?l.intro:"先通过上一章考核。"))+"</div></div></div>";
+      '<div class="small dim" style="margin-top:4px">'+(st?"已通过本章，可继续学习或挑战。":(un?l.intro:"先通过上一章挑战或考核。"))+"</div></div></div>";
   });
   h+="</div>";
   $("#scr-campus").innerHTML=h;
@@ -4871,6 +4871,11 @@ function renderLessonHub(ci){
       '<div style="flex:1;min-width:0"><div style="font-weight:900">'+ls.title+' <span class="tag">'+KPS[ls.kp]+"</span></div>"+
       '<div class="small dim">'+ls.goal+"</div></div></div>";
   });
+  h+='<div class="panel" style="border-color:var(--gold-dk)"><div class="qnum">CHAPTER CHALLENGE · 直接过关</div>'+
+  '<div style="font-weight:900;margin-bottom:7px">无需重做课时，直接测试本章</div>'+
+  '<div class="small dim">完成代码挑战，或五题独立考试答对 4 题，本章即通过并开放下一章。原课程进度和学习记录会保留。</div>'+
+  '<div class="lesson-tools"><button class="btn" id="bt-direct-challenge">直接做章节挑战 ▶</button><button class="btn ghost" id="bt-direct-exam">直接做五题测试 ▶</button></div>'+
+  (SAVE.done[l.id]?'<div class="small" style="margin-top:8px;color:var(--green)">✓ 本章已经通过，可继续下一章。</div>':"")+'</div>';
   h+='<div class="panel"><div style="font-weight:900;margin-bottom:6px">掌握度(图书馆可看明细)</div><div class="mrow">'+group.map(ls=>{
     const m=SAVE.mastery[ls.kp]||0;
     const nm=["未接触","接触过","引导下完成","独立答题"][m];
@@ -4881,6 +4886,8 @@ function renderLessonHub(ci){
   (chReady(ci)?"":'<div class="small dim" style="margin-top:8px">上完'+group.length+'节课,考核开放。</div>')+"</div>";
   $("#scr-campus").innerHTML=h;
   $("#bt-back2").onclick=$("#bt-back3").onclick=()=>{sfx("click");renderChapters()};
+  $("#bt-direct-challenge").onclick=()=>{sfx("click");openChapterChallenge(ci)};
+  $("#bt-direct-exam").onclick=()=>{sfx("click");startExam(ci)};
   $$("#scr-campus .lessonrow").forEach(el=>{el.onclick=()=>{sfx("click");openLesson(ci,+el.dataset.i)}});
   const ex=$("#bt-chexam");if(ex&&!ex.disabled)ex.onclick=()=>{sfx("click");startExam(ci)};
 }
@@ -4916,7 +4923,7 @@ function resumeLesson(){
 }
 function stepStage(st){return st.stage||({board:"teach",scene:"example",op:"example",predict:"practice",probe:"practice",variant:"independent"})[st.k]}
 const STAGE_LABELS={intro:"课程导入",teach:"概念讲解",example:"示例演示",practice:"随堂练习",recap:"课堂回顾",independent:"独立练习"};
-const PRACTICE_TASKS={"C02":{"name":"转换时机","q":"让 9 / 2 得到 4.5，而不是 4。你必须在除法之前做类型转换。","before":"int a=9,b=2;\ndouble result =","starter":"static_cast<double>(a / b)","after":";\nstd::cout<<result; // 4.5","solution":"static_cast<double>(a) / b","tip":"转换整个整数除法结果已经太晚；只转换 a 或 b。","explain":"先转换一个操作数，再执行浮点除法。"},"C03":{"name":"自增求值顺序","q":"消除 i++ + i++ 的未定义行为；按顺序保存两次旧值，再算 sum。","before":"int i=1;\n// 原写法：int sum=i++ + i++;\n","starter":"int sum=i++ + i++;","after":"\nstd::cout<<sum<<' '<<i; // 3 3","solution":"int left=i++;\nint right=i++;\nint sum=left+right;","tip":"先保存两次递增之前的值，再计算 sum。","explain":"把修改拆成顺序明确的语句，left=1、right=2、i=3。"},"C04":{"name":"悬垂引用","q":"返回局部对象的引用会悬垂。保持返回引用接口，修复生命周期。","before":"const int& getValue(){\n","starter":"const int value=42;\nreturn value;","after":"\n}\nint main(){std::cout<<getValue();}","solution":"static const int value=42;\nreturn value;","tip":"自动局部变量会销毁；static 局部对象活得更久。","explain":"static 局部对象在函数返回之后仍存在，引用有效。"},"C05":{"name":"函数替换宏","q":"宏 SQ(n++) 会重复修改 n。改写成内联函数 sq，让实参只求值一次。","before":"// 原宏 #define SQ(x) ((x)*(x))\n","starter":"#define sq(x) ((x)*(x))","after":"\nint main(){int n=2;int y=sq(n++);std::cout<<y<<' '<<n;}","solution":"inline int sq(int x){return x*x;}","tip":"形参只接收一次实参值，函数体使用 x。","explain":"函数只求值一次 n++，因此 y=4，n=3。"},"C06":{"name":"静态成员定义","q":"Counter 已声明 static int total。请在类外提供唯一定义。","before":"struct Counter{static int total;Counter(){++total;}};\n","starter":"static int Counter::total=0;","after":"\nint main(){Counter a,b;std::cout<<Counter::total;}","solution":"int Counter::total=0;","tip":"类外定义不重复写 static。","explain":"所有 Counter 对象使用同一个静态数据成员。"},"C07":{"name":"避免切片","q":"show 按值接收 Base 导致切片。改成保持动态绑定的参数形式。","before":"struct Base{virtual const char* name()const{return \"Base\";}};\nstruct Derived:Base{const char* name()const override{return \"Derived\";}};\n","starter":"void show(Base b)","after":"{std::cout<<b.name();}\nint main(){Derived d;show(d);} // Derived","solution":"void show(const Base& b)","tip":"传入 const Base&，不要拷贝基类子对象。","explain":"引用原来的 Derived 对象，虚调用可以到派生版本。"},"C08":{"name":"类模板偏特化","q":"编写 Box<T,T> 的偏特化，让相同类型组合的 tag=1。","before":"template<class T,class U>struct Box{static constexpr int tag=0;};\n","starter":"template<class T>struct Box<T>{static constexpr int tag=1;};","after":"\nstatic_assert(Box<int,int>::tag==1);\nstatic_assert(Box<int,double>::tag==0);","solution":"template<class T>struct Box<T,T>{static constexpr int tag=1;};","tip":"偏特化形状需写两个参数位置：Box<T,T>。","explain":"只有两个类型相同的组合命中偏特化。"},"C09":{"name":"迭代器失效","q":"删除 vector 中所有的 2：删除时接住 erase 的返回值，否则才 ++it。","before":"std::vector<int> v{2,3,2,4};\n","starter":"for(auto it=v.begin();it!=v.end();++it){if(*it==2)v.erase(it);}","after":"\n// 期待剩余 3、4；连续出现的 2 也要删掉","solution":"for(auto it=v.begin();it!=v.end();){if(*it==2)it=v.erase(it);else ++it;}","tip":"erase 会让旧迭代器失效。删除分支必须接住返回值。","explain":"只有未删除时才递增，避免使用失效迭代器。"},"C10":{"name":"lambda 生命周期","q":"返回引用捕获局部 n 的 lambda 会悬垂。改成安全的可修改闭包。","before":"std::function<int()> make(){int n=0;\n","starter":"return [&n]{return ++n;};","after":"\n}\n// f() 连续调用得到 1、2","solution":"return [n]() mutable {return ++n;};","tip":"捕获 n 的副本，并用 mutable 修改闭包中的副本。","explain":"闭包自带 n，函数返回后仍可安全使用。"},"C11":{"name":"异常对象切片","q":"按值捕获 std::exception 可能切片。改为规范的引用捕获。","before":"try{risky();}\n","starter":"catch(std::exception e)","after":"{std::cout<<e.what();}","solution":"catch(const std::exception& e)","tip":"常用 const T& 捕获异常。","explain":"避免基类对象拷贝及切片，保留多态。"},"C12":{"name":"async 执行策略","q":"显式选择 std::launch::async，避免默认策略可能 deferred。","before":"auto job=[]{return 42;};\nauto fut=","starter":"std::async(job)","after":";\nstd::cout<<fut.get();","solution":"std::async(std::launch::async,job)","tip":"在第一个参数写 std::launch::async。","explain":"明确指定异步启动策略，不依赖实现选择。"},"C13":{"name":"构建和调试","q":"链接 main.cpp 和 calc.cpp，使用 C++17 与 -g，输出 app。","before":"$ ","starter":"g++ main.cpp -o app","after":"\n// calc.cpp 定义了 main.cpp 调用的函数","solution":"g++ -std=c++17 -g main.cpp calc.cpp -o app","tip":"两个源文件都要编译；加上 -g 与 -std=c++17。","explain":"一起链接两个源文件，并保留调试符号。"}};
+const PRACTICE_TASKS={"C01":{"name":"修复头文件重复定义","q":"counter.h 同时被 main.cpp 与 worker.cpp 包含。请将原本重复的变量定义改为头文件中的 extern 声明和 counter.cpp 中的唯一定义，按这两个顺序填写。","before":"// counter.h（第一行）\n// counter.cpp（第二行）\n","starter":"int counter=0;\nint counter=0;","after":"\n// 头文件只放声明；源文件仅定义一次","solution":"extern int counter;\nint counter=0;","tip":"头文件 extern int counter;，源文件 int counter = 0;。","explain":"不同翻译单元都可看到同一声明，链接时只有 counter.cpp 的一份定义。"},"C02":{"name":"转换时机","q":"让 9 / 2 得到 4.5，而不是 4。你必须在除法之前做类型转换。","before":"int a=9,b=2;\ndouble result =","starter":"static_cast<double>(a / b)","after":";\nstd::cout<<result; // 4.5","solution":"static_cast<double>(a) / b","tip":"转换整个整数除法结果已经太晚；只转换 a 或 b。","explain":"先转换一个操作数，再执行浮点除法。"},"C03":{"name":"自增求值顺序","q":"消除 i++ + i++ 的未定义行为；按顺序保存两次旧值，再算 sum。","before":"int i=1;\n// 原写法：int sum=i++ + i++;\n","starter":"int sum=i++ + i++;","after":"\nstd::cout<<sum<<' '<<i; // 3 3","solution":"int left=i++;\nint right=i++;\nint sum=left+right;","tip":"先保存两次递增之前的值，再计算 sum。","explain":"把修改拆成顺序明确的语句，left=1、right=2、i=3。"},"C04":{"name":"悬垂引用","q":"返回局部对象的引用会悬垂。保持返回引用接口，修复生命周期。","before":"const int& getValue(){\n","starter":"const int value=42;\nreturn value;","after":"\n}\nint main(){std::cout<<getValue();}","solution":"static const int value=42;\nreturn value;","tip":"自动局部变量会销毁；static 局部对象活得更久。","explain":"static 局部对象在函数返回之后仍存在，引用有效。"},"C05":{"name":"函数替换宏","q":"宏 SQ(n++) 会重复修改 n。改写成内联函数 sq，让实参只求值一次。","before":"// 原宏 #define SQ(x) ((x)*(x))\n","starter":"#define sq(x) ((x)*(x))","after":"\nint main(){int n=2;int y=sq(n++);std::cout<<y<<' '<<n;}","solution":"inline int sq(int x){return x*x;}","tip":"形参只接收一次实参值，函数体使用 x。","explain":"函数只求值一次 n++，因此 y=4，n=3。"},"C06":{"name":"静态成员定义","q":"Counter 已声明 static int total。请在类外提供唯一定义。","before":"struct Counter{static int total;Counter(){++total;}};\n","starter":"static int Counter::total=0;","after":"\nint main(){Counter a,b;std::cout<<Counter::total;}","solution":"int Counter::total=0;","tip":"类外定义不重复写 static。","explain":"所有 Counter 对象使用同一个静态数据成员。"},"C07":{"name":"避免切片","q":"show 按值接收 Base 导致切片。改成保持动态绑定的参数形式。","before":"struct Base{virtual const char* name()const{return \"Base\";}};\nstruct Derived:Base{const char* name()const override{return \"Derived\";}};\n","starter":"void show(Base b)","after":"{std::cout<<b.name();}\nint main(){Derived d;show(d);} // Derived","solution":"void show(const Base& b)","tip":"传入 const Base&，不要拷贝基类子对象。","explain":"引用原来的 Derived 对象，虚调用可以到派生版本。"},"C08":{"name":"类模板偏特化","q":"编写 Box<T,T> 的偏特化，让相同类型组合的 tag=1。","before":"template<class T,class U>struct Box{static constexpr int tag=0;};\n","starter":"template<class T>struct Box<T>{static constexpr int tag=1;};","after":"\nstatic_assert(Box<int,int>::tag==1);\nstatic_assert(Box<int,double>::tag==0);","solution":"template<class T>struct Box<T,T>{static constexpr int tag=1;};","tip":"偏特化形状需写两个参数位置：Box<T,T>。","explain":"只有两个类型相同的组合命中偏特化。"},"C09":{"name":"迭代器失效","q":"删除 vector 中所有的 2：删除时接住 erase 的返回值，否则才 ++it。","before":"std::vector<int> v{2,3,2,4};\n","starter":"for(auto it=v.begin();it!=v.end();++it){if(*it==2)v.erase(it);}","after":"\n// 期待剩余 3、4；连续出现的 2 也要删掉","solution":"for(auto it=v.begin();it!=v.end();){if(*it==2)it=v.erase(it);else ++it;}","tip":"erase 会让旧迭代器失效。删除分支必须接住返回值。","explain":"只有未删除时才递增，避免使用失效迭代器。"},"C10":{"name":"lambda 生命周期","q":"返回引用捕获局部 n 的 lambda 会悬垂。改成安全的可修改闭包。","before":"std::function<int()> make(){int n=0;\n","starter":"return [&n]{return ++n;};","after":"\n}\n// f() 连续调用得到 1、2","solution":"return [n]() mutable {return ++n;};","tip":"捕获 n 的副本，并用 mutable 修改闭包中的副本。","explain":"闭包自带 n，函数返回后仍可安全使用。"},"C11":{"name":"异常对象切片","q":"按值捕获 std::exception 可能切片。改为规范的引用捕获。","before":"try{risky();}\n","starter":"catch(std::exception e)","after":"{std::cout<<e.what();}","solution":"catch(const std::exception& e)","tip":"常用 const T& 捕获异常。","explain":"避免基类对象拷贝及切片，保留多态。"},"C12":{"name":"async 执行策略","q":"显式选择 std::launch::async，避免默认策略可能 deferred。","before":"auto job=[]{return 42;};\nauto fut=","starter":"std::async(job)","after":";\nstd::cout<<fut.get();","solution":"std::async(std::launch::async,job)","tip":"在第一个参数写 std::launch::async。","explain":"明确指定异步启动策略，不依赖实现选择。"},"C13":{"name":"构建和调试","q":"链接 main.cpp 和 calc.cpp，使用 C++17 与 -g，输出 app。","before":"$ ","starter":"g++ main.cpp -o app","after":"\n// calc.cpp 定义了 main.cpp 调用的函数","solution":"g++ -std=c++17 -g main.cpp calc.cpp -o app","tip":"两个源文件都要编译；加上 -g 与 -std=c++17。","explain":"一起链接两个源文件，并保留调试符号。"}};
 function stepBoard(st){
   if(st.lines)return st.lines.join("\n");
   if(st.q){
@@ -5020,6 +5027,7 @@ function renderStep(){
 function validateRepair(id,answer){
  const c=answer.replace(/\/\/[^\n]*$/gm,"").replace(/\s+/g,"");
  switch(id){
+ case "C01":return /^externintcounter;intcounter=0;$/.test(c);
  case "C02":return /^static_cast<double>\(a\)\/b;?$/.test(c)||/^a\/static_cast<double>\(b\);?$/.test(c);
  case "C03":return /^intleft=i\+\+;intright=i\+\+;intsum=left\+right;$/.test(c);
  case "C04":return /^(staticconst|conststatic)intvalue=42;returnvalue;$/.test(c);
@@ -6738,7 +6746,7 @@ function renderCeremony(){
    '<div style="text-align:center;padding-top:16px"><div class="disp" style="font-size:10px;color:var(--gold);letter-spacing:2px">GRADUATION · 毕业典礼</div>'+
    "<h1 style='font-size:30px'>"+ESC(SAVE.name)+",毕业了</h1>"+
    '<div class="panel" style="max-width:560px;margin:14px auto;text-align:left">'+
-   '<div>十三门章节考核全部通过,XP '+SAVE.xp+"。</div>"+
+   '<div>十三章挑战或考试已通过,XP '+SAVE.xp+"。</div>"+
    '<div style="margin-top:6px">一路上你的误区笔记本记下过 <b>'+misN+"</b> 条\"我原来以为\"——现在它们都是你的了。</div>"+
    '<div style="margin-top:6px">互动课时共 '+total+' 个知识点,你能<b>独立掌握</b>的有 '+indep+"/"+total+"。"+(indep<total?"没到独立的那几个,回去把变式重做一遍再走。":"全部独立掌握——这正是这门课要教你的:不是背答案,是能自己判断。")+"</div></div>"+
    '<div class="panel" style="max-width:560px;margin:0 auto;text-align:left"><div class="who" style="font-family:var(--f-disp);font-size:9px;color:var(--gold)">教授 · 最后一段话</div>'+
