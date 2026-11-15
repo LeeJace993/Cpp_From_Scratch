@@ -4891,6 +4891,48 @@ function renderLessonHub(ci){
   $$("#scr-campus .lessonrow").forEach(el=>{el.onclick=()=>{sfx("click");openLesson(ci,+el.dataset.i)}});
   const ex=$("#bt-chexam");if(ex&&!ex.disabled)ex.onclick=()=>{sfx("click");startExam(ci)};
 }
+
+function openChapterChallenge(ci){
+ const id="C"+String(ci+1).padStart(2,"0"),t=PRACTICE_TASKS[id];
+ showScreen("scr-class");
+ $("#scr-class").innerHTML='<div class="disp">CHAPTER '+(ci+1)+' · '+ESC(LEVELS[ci].name)+' / CODE CHALLENGE</div>'+
+ '<div class="panel"><div class="qnum">章节挑战 · '+ESC(t.name)+'</div><div class="qstem">'+ESC(t.q)+'</div>'+
+ '<div class="repair-code"><pre>'+hl(t.before)+'</pre></div><textarea id="chapter-answer" class="repair-edit" spellcheck="false" aria-label="章节挑战代码"></textarea>'+
+ '<div class="repair-code"><pre>'+hl(t.after)+'</pre></div>'+
+ '<div class="small dim">本关核对关键代码结构，不在浏览器编译 C++；其他等价实现可以本机使用 g++ 验证。</div>'+
+ '<div class="repair-feedback" id="challenge-feedback" aria-live="polite"></div>'+
+ '<div class="lesson-tools"><button class="btn" id="challenge-check">提交挑战 ▶</button><button class="btn ghost small" id="challenge-tip">提示</button>'+
+ '<button class="btn ghost small" id="challenge-answer" hidden>参考答案</button><button class="btn ghost small" id="challenge-back">返回课时中心</button></div></div>';
+ const input=$("#chapter-answer"),fb=$("#challenge-feedback"),check=$("#challenge-check"),tip=$("#challenge-tip"),ans=$("#challenge-answer");
+ input.value=t.starter;let assisted=false,wrong=0;
+ $("#challenge-back").onclick=()=>renderLessonHub(ci);
+ tip.onclick=()=>{assisted=true;fb.innerHTML='<div class="review ng">'+ESC(t.tip)+'</div>'};
+ ans.onclick=()=>{assisted=true;input.value=t.solution;ans.hidden=true;fb.innerHTML='<div class="review ng">参考答案已填入，请理解后提交。</div>'};
+ check.onclick=()=>{
+  const text=input.value;
+  if(!validateRepair(id,text)){
+    wrong++;sfx("bad");if(wrong>=2)ans.hidden=false;
+    fb.innerHTML='<div class="review ng">'+ESC(wrong>1?t.tip:"代码结构仍不符合要求。请先自己分析，或点提示。")+'</div>';return;
+  }
+  const lv=LEVELS[ci],previous=!!SAVE.done[lv.id];
+  SAVE.done[lv.id]=Math.max(SAVE.done[lv.id]||0,assisted?2:3);
+  SAVE.chapterChallenges=SAVE.chapterChallenges||{};
+  const old=SAVE.chapterChallenges[lv.id];
+  if(!old||(!assisted&&old.assisted))SAVE.chapterChallenges[lv.id]={code:text,assisted,completedAt:Date.now()};
+  SAVE.codeTasks=SAVE.codeTasks||{};
+  if(!SAVE.codeTasks[id])SAVE.codeTasks[id]={code:text,assisted};
+  save();if(!previous)addXP(20);sfx("win");
+  check.disabled=true;tip.disabled=true;ans.hidden=true;input.readOnly=true;
+  fb.innerHTML='<div class="review ok"><div class="rl">本章挑战通过，下一章已解锁</div>'+ESC(t.explain)+
+   (assisted?'<div class="small dim">本次使用提示，属于引导完成。</div>':'<div class="small dim">独立完成。</div>')+'</div>'+
+   '<div class="lesson-tools"><button class="btn" id="challenge-next">'+(ci===LEVELS.length-1?"查看毕业典礼 ▶":"下一章 ▶")+'</button>'+
+   '<button class="btn ghost" id="challenge-stay">回本章课时</button></div>';
+  $("#challenge-next").onclick=()=>{if(ci===LEVELS.length-1)renderCeremony();else renderLessonHub(ci+1)};
+  $("#challenge-stay").onclick=()=>renderLessonHub(ci);
+  updateStatus();
+ };
+}
+
 /* ---- 互动章节：课时课堂（步骤机） ---- */
 let CUR=null;
 function openLesson(ci,ix){
