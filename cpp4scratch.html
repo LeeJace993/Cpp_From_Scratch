@@ -243,6 +243,11 @@ hr.px{border:none;border-top:3px solid var(--line);margin:14px 0}
   .bob,#speech .hint{animation:none}
   .opts button.bad{animation:none}
 }
+.repair-edit{display:block;width:100%;min-height:115px;resize:vertical;padding:12px;background:#0d1024;color:var(--chalk);border:3px solid var(--cyan);font:14px/1.75 var(--f-mono)}
+.repair-edit:focus{outline:2px solid var(--gold);outline-offset:2px}
+.repair-code{margin:8px 0;background:#0d1024;border:2px solid var(--line);padding:10px;overflow-x:auto}
+.repair-code pre{font:13px/1.75 var(--f-mono);margin:0;white-space:pre-wrap}
+.repair-feedback{margin:10px 0;min-height:22px}
 </style>
 
 <div id="wrap">
@@ -1262,7 +1267,8 @@ const CH2_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · 选 cast 的顺序",
    lines:["① 相关类型转换 → static_cast（编译期，失败即编译错误）","② 多态下行转换 → dynamic_cast（运行期，nullptr 兜底）","③ 只动 const   → const_cast（改真常量 = 未定义行为）","④ 位模式重解释 → reinterpret_cast（最危险）","","默认写法：能用 static_cast，就不用 C 风格强转"],
    d:"收拢成一张选择表。顺序上先问“要不要运行期检查”，再问“是不是只动 const”，都不是就 static_cast；reinterpret_cast 出现时，应当问自己是不是真的在做底层操作。"},
-  {k:"variant",
+  {k:"repair",id:"C02",stage:"independent",cap:"实战 · 转换时机",q:"让 9 / 2 得到 4.5，而不是 4。你必须在除法之前做类型转换。",help:"转换整个整数除法结果已经太晚；只转换 a 或 b。"},
+   {k:"variant",
    q:"独立练习：int a = 5, b = 2; 想让浮点除法得到 2.5，哪一行达到目的？",
    code:["① double t1 = a / b;","② double t2 = static_cast<double>(a) / b;","③ double t3 = static_cast<double>(a / b);"],
    opts:["①","②","③"],ci:1,kp:"kp_cast",
@@ -1503,7 +1509,8 @@ const CH7_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · 保住多态的检查单",
    lines:["① 形参用基类引用/指针，不用值","② 赋值、容器元素、异常捕获——都别按值装多态对象","③ 接口：纯虚函数 + 虚析构","④ 抽象类不能实例化；派生实现完才能 new","⑤ 切片的三场景：传参 / 赋值 / 捕获异常","","本章完成：去考场（5 题，对 4 过）"],
    d:"收拢成一张检查单。第②条里“异常捕获按值也切片”是最冷门的一处：throw *pb 抛出的是按静态类型切片的副本，catch(B) 接到的就是个 B。本章四节课把地基（布局）、机制（虚表）、陷阱（静态绑定、切片）全部铺完，可以进考场了。"},
-  {k:"variant",
+  {k:"repair",id:"C07",stage:"independent",cap:"实战 · 避免切片",q:"show 按值接收 Base 导致切片。改成保持动态绑定的参数形式。",help:"传入 const Base&，不要拷贝基类子对象。"},
+   {k:"variant",
    q:"独立练习：要定义一个“只能被继承、不能直接创建”的 Shape 接口，要求派生类必须实现面积计算。哪一行是关键声明？",
    opts:["double area() const { return 0; }","virtual double area() const = 0;","virtual double area() const { return 0; }","static double area() const = 0;"],ci:1,kp:"kp_slice",
    why:"= 0 把 area 设为纯虚：Shape 变成抽象类，无法直接创建；任何派生类不实现 area 也仍是抽象类，逼着实现完整才能 new。虚析构一起写上，delete 基类指针才安全——接口类的标准写法就是这两行的组合。"}
@@ -1739,7 +1746,8 @@ const CH8_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · 特化判定链",
    lines:["① 命中优先级:全特化 > 偏特化 > 主模板","② 偏特化靠约束筛选;约束不满足就出局","③ 两个偏特化都命中且互不更特化 → 二义报错","④ 全特化的定义随主模板进头文件(incomplete type)","⑤ 函数模板没有偏特化;需求交给重载","","本章完成:去考场(5 题,对 4 过)"],
    d:"五条收拢。第③条是本章最深的一题——「更特化的赢」有前提。四节课把模板的地基(实例化)、工程(定义位置)、调用(推导)、定制(特化)铺完,可以进考场了。"},
-  {k:"variant",
+  {k:"repair",id:"C08",stage:"independent",cap:"实战 · 类模板偏特化",q:"编写 Box<T,T> 的偏特化，让相同类型组合的 tag=1。",help:"偏特化形状需写两个参数位置：Box<T,T>。"},
+   {k:"variant",
    q:"独立练习:template<typename T> struct Bar { static const int i = 0; }; template<> struct Bar<double> { static const int i = 7; };  Bar<int>::i 和 Bar<double>::i 各是几?",
    opts:["0 和 7——主模板接 int,全特化接 double","7 和 7——全特化对所有类型生效","编译错误——全特化要写在类里"],ci:0,kp:"kp_tmspec",
    why:"全特化为 double 单独画图纸,命中它就是 7;Bar<int> 没人点名,走主模板得 0。注意全特化的定义要和主模板一起进头文件——HD 课 incomplete type 的教训在这里同样适用。"}
@@ -2153,7 +2161,8 @@ const CH9_LESSONS=[
    lines:["① tie 引用包装,make_tuple 拷贝——一字之差两种命","② get 按位置或按类型(类型须唯一);tuple_size 数格子","③ sort 比较器传对象:greater<int>()、lambda、函数对象、函数指针","④ 非随机访问容器不进 std::sort;list 用 ls.sort()","⑤ array 双层花括号最稳;string 的 < 是字典序","⑥ 自定义分配器:myAlloc + using 别名(实跑 11)","","本章完成:去考场(5 题,对 4 过)"],
    d:"六条收拢。第①②条是 tuple 题群,第③④条是 sort 题群——「传类型名没传对象」与「list 进 sort」两个死穴都在判定表里点过。第⑥条是题群的规范行:最小分配器只要 value_type + allocate/deallocate,配 using 别名 vector<int, myAlloc<int>> 就是全貌,实跑 11。",
    help:"带走一句话:tie 绑引用;比较器传对象;非随机访问不排队。"},
-  {k:"variant",
+  {k:"repair",id:"C09",stage:"independent",cap:"实战 · 迭代器失效",q:"删除 vector 中所有的 2：删除时接住 erase 的返回值，否则才 ++it。",help:"erase 会让旧迭代器失效。删除分支必须接住返回值。"},
+   {k:"variant",
    q:"独立练习:std::array<int, 3> 的初始化,哪种说法正确?",
    opts:["{{1, 2, 3}} 与 {4, 5, 6} 都能编译,双层花括号最稳(实跑)","只有 {{1, 2, 3}} 合法——array 必须双层","只有 {4, 5, 6} 合法——双层是老写法,已废弃"],ci:0,kp:"kp_stltool",
    why:"array 是「装着数组的聚合」:双层花括号把两层都写明;单层靠编译器的花括号省略也能编(实跑两种同输出 123456)。嵌套聚合(array<pair<int,int>,2> 这类)时,双层写法才不歧义——养成双层的习惯。"}
@@ -2481,7 +2490,8 @@ const CH10_LESSONS=[
    lines:["① lambda 表达式 = 闭包类的临时对象","② 捕获 → 成员变量;函数体 → operator()","③ 无捕获才能转函数指针——有状态装不下","④ 三条接法:模板参数(全能) / std::function(全能+开销) / 函数指针(只收无捕获)","⑤ 字面量运算符:后缀 _fo 定换算规则","","独立练习:泛型接口该用哪种接法?","带做:Func([]{})(第八章欠账)、123_fo(第六章欠账)"],
    d:"五条收拢:第①②条是考核 BOSS 的答案,也是全章的收口——前面所有捕获行为都从对象模型推出;第③④条是工程选型;第⑤条是第六章欠的带做,本章还上。",
    help:"带走一句话:lambda 是对象不是函数;接它只看一件事——它带没带家当。"},
-  {k:"variant",
+  {k:"repair",id:"C10",stage:"independent",cap:"实战 · lambda 生命周期",q:"返回引用捕获局部 n 的 lambda 会悬垂。改成安全的可修改闭包。",help:"捕获 n 的副本，并用 mutable 修改闭包中的副本。"},
+   {k:"variant",
    q:"独立练习:一个泛型接口要「什么可调用物都收,还能存起来慢慢调」,形参应该写成什么?",
    opts:["std::function——类型擦除,lambda(有捕获也行)、函数指针、函数对象全能装,还能存进容器","void(*)()——函数指针最通用","模板参数 F——它才是万能的"],ci:0,kp:"kp_laclo",
    why:"「什么都能收」排除函数指针(有捕获的接不住,cap2fp 实跑报错);「存起来慢慢调、放容器里」排除模板参数——模板的类型在编译期定死,容器里装不下「各种不同类型」。std::function 用类型擦除把两条要求都接住,代价是那一层间接调用。cwtab 第 4/5 行的分界正是这道题的两半。"}
@@ -2926,7 +2936,8 @@ const CH11_LESSONS=[
    lines:["① 谁接住:catch(const T&) 规范;按值接=切片(GCC:-Wcatch-value)","② 谁析构:栈展开逆序析构沿途局部对象——RAII 兑现","③ 何时 terminate:两红线(noexcept 抛出/展开中析构再抛)","④ 重抛:throw; 保原对象;throw e; 拷贝新对象","","独立练习:rethrow.cpp 里把 throw; 换成 throw e;","  输出多一行什么?(自己推,再上机验)","带做:本章完结——12 章并发见"],
    d:"四条收拢:第①条接回第六章的切片,第②条是 RAII 的终极考场,第③条是题库 noexcept/析构题的答案,第④条是重抛规范。独立练习的答案在 rethrow.cpp 的实跑输出里摆着:多一行 COPY Err——throw e; 走的是普通 throw 的拷贝路径。",
    help:"带走一句话:const 引用接住一切,栈展开带走一切,terminate 只有两条路——唯一现场容不下第二个异常。"},
-  {k:"variant",
+  {k:"repair",id:"C11",stage:"independent",cap:"实战 · 异常对象切片",q:"按值捕获 std::exception 可能切片。改为规范的引用捕获。",help:"常用 const T& 捕获异常。"},
+   {k:"variant",
    q:"独立练习:rethrow.cpp 里把 catch 内的 throw; 换成 throw e;,clone 那段的输出多出什么?",
    opts:["多一行 COPY Err——throw e; 按普通 throw 重新拷贝异常对象","多一行 dtor Err——重抛把原对象析构了","什么都不多——throw; 与 throw e; 等价"],ci:0,kp:"kp_exc",
    why:"rethrow.cpp 实跑对照:throw e; 是一条普通的 throw 语句,抛出的是 e 的【拷贝】——所以多打一行 COPY Err;裸 throw; 才是「原对象原样上交」。第二项:原 e 要到 catch 退出才析构,重抛不触发它;第三项的等价只在「无拷贝副作用」的类型里才勉强成立——有打印的 Err 立刻暴露差异。规范口径:重抛写裸 throw;。"}
@@ -3323,7 +3334,8 @@ const CH12_LESSONS=[
    lines:["① async 默认策略 async|deferred 由实现定","② deferred 不建线程:get/wait 在调用者线程跑","③ future:get 一次,之后 valid 为假,再 get 是 UB","④ promise 双 set 抛 future_error;不可拷贝","⑤ shared_future:可拷贝、多次 get","","独立练习:想让三个线程都拿到同一份异步结果,","  该把 future 换成什么?","带做:本章完结——13 章工程能力见"],
    d:"五条收拢:第②条是 deferred.cpp 的实跑考点,第③④条是「一次一线」的两侧,第⑤条是题库 shared_future 题。独立练习的答案:shared_future——拷三份,三处各自 get,同一份结果。",
    help:"带走一句话:凭证一次用,策略显式写,多人取货找 shared_future。"},
-  {k:"variant",
+  {k:"repair",id:"C12",stage:"independent",cap:"实战 · async 执行策略",q:"显式选择 std::launch::async，避免默认策略可能 deferred。",help:"在第一个参数写 std::launch::async。"},
+   {k:"variant",
    q:"独立练习:想让三个线程都拿到同一份异步结果,future 该怎么换?",
    opts:["换成 shared_future——可拷贝,三份凭证各自 get 同一结果","future 拷三份——反正结果一样","三个 future 各自 async 跑三遍"],ci:0,kp:"kp_async",
    why:"shared_future 是凭证族里唯一可拷贝的:拷三份、三处 get,取的是同一个共享状态的结果。第二项:future 不可拷贝(可移动)——编译错误;第三项:任务跑三遍,既贵又可能产出三个不同的结果——「同一份」的语义丢了。"}
@@ -3729,7 +3741,8 @@ const CH13_LESSONS=[
    lines:["① 四步骤:.i 复印 → .s 汇编稿 → .o 机器码 → 可执行(Q397)","② 调试信息认 -g(readelf 真机对比;Q395/396)","③ -g -O0 调试,-O2 发布","④ CMake 三句起步;改脚本要 re-run cmake(Q394)","⑤ 第一章的编译模型,本章全部实机落地","","独立练习:GDB 里看不了行号,流水线哪一站漏了?","带做:毕业典礼见——十三章全通"],
    d:"五条收拢:第①④条是构建题群,第②条挂钩 GDB 与 coredump 两课。独立练习的答案:编译时漏了 -g——GDB 与 core 都只能给你裸地址;补法是重新带 -g 编译。",
    help:"带走一句话:流水线四站各交一种货,-g 是留给验尸官的那份图纸。"},
-  {k:"variant",
+  {k:"repair",id:"C13",stage:"independent",cap:"实战 · 构建和调试",q:"链接 main.cpp 和 calc.cpp，使用 C++17 与 -g，输出 app。",help:"两个源文件都要编译；加上 -g 与 -std=c++17。"},
+   {k:"variant",
    q:"独立练习:改了 CMakeLists.txt 之后直接 make,新语句没生效——差哪一步?",
    opts:["重新运行 cmake——make 只是执行上次生成的构建脚本","重新编译 main.cpp——源文件没变不用重编","删除 CMakeCache.txt 再改——缓存不是根因"],ci:0,kp:"kp_build",
    why:"构建是两段式:cmake 生成构建脚本,make 按脚本干活——改了 CMakeLists 不重新 cmake,包工头照旧纸施工(Q394「语句不生效」的经典病灶)。第二项方向错了:病灶在脚本缓存不在源文件;第三项把「清理缓存」当根因——不重新 cmake,删多少遍缓存都白删。"}
@@ -3941,7 +3954,8 @@ const CH3_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · 三档判断流程",
    lines:["① 两个动作之间有运算符给的顺序？","   有 → 第一档，放心写","② 没有 → 它们冲突吗（同一对象一读一写/两写）？","   不冲突 → 各自求值，顺序无所谓","   冲突 → UB，改写代码","③ 特例：函数实参之间 = 未指定不交错","   两种结果都合法，别写依赖顺序的实参","","GCC 提醒偏保守：以标准语义判断","独立练习：四个片段归档"],
    d:"判断流程三步收拢。注意第三章四课连起来是一条线：先分值与副作用，再分组，再看哪些组执行，最后看组与组之间的顺序——这四步就是“读出任何一行代码在做什么”的完整方法。独立练习做一次综合归档。"},
-  {k:"variant",
+  {k:"repair",id:"C03",stage:"independent",cap:"实战 · 自增求值顺序",q:"消除 i++ + i++ 的未定义行为；按顺序保存两次旧值，再算 sum。",help:"先保存两次递增之前的值，再计算 sum。"},
+   {k:"variant",
    q:"独立练习：以下四个片段，哪一个在 C++17 是未定义行为？",
    code:["A. i = i++;","B. f(g(), h());","C. cout << tag() << tag();","D. i++ * i++;"],
    opts:["A","B","C","D"],ci:3,kp:"kp_order",
@@ -4155,7 +4169,8 @@ const CH4_LESSONS=[
    lines:["① 对象归谁所有？","② 它活多久？","","局部 → 亡（悬垂 + GCC 警告）","static → 活到程序结束","传参 → 活过整个调用","","第四章四课连成一条线：","读声明 → 数 \\0 → 判贴身 → 问生死","","独立练习：悬垂判定"],
    d:"两问收拢，第四章合龙。这四章连起来是一条完整的阅读链：拿到一行代码，先读声明（DL），再数房客（NA），再判贴身（PD），最后问对象还在不在（LF）。独立练习做一次综合判定。",
    help:"下一章（宏与预处理）回到文本的世界——但「对象活多久」这个问题会在第 06 章对象模型里再次出现：构造、析构的顺序，本质也是生命周期。"},
-  {k:"variant",
+  {k:"repair",id:"C04",stage:"independent",cap:"实战 · 悬垂引用",q:"返回局部对象的引用会悬垂。保持返回引用接口，修复生命周期。",help:"自动局部变量会销毁；static 局部对象活得更久。"},
+   {k:"variant",
    q:"独立练习：int& r = badRef();  （badRef 返回局部变量的引用）之后使用 r 属于什么情况？",
    code:["int& badRef(){ int x = 7; return x; }","int main(){","    int& r = badRef();","    // 使用 r 是什么情况？","}"],
    opts:["安全——r 保存了 x 的副本","未定义行为——r 绑定到已销毁的局部变量","编译错误——编译器直接拒绝","x 会自动延长寿命"],ci:1,kp:"kp_life",
@@ -4373,7 +4388,8 @@ const CH6_LESSONS=[
    lines:["① 类内声明,类外定义(不写 static)","② 一份存储:C::v / a.v / p->v 同一份","③ 静态成员函数没有 this","④ 派生类共享同一份","⑤ 例外:整型 const 类内;C++17 inline static","","第六章四课连成一条线:","生灭 → 初始化 → 拷贝 → 共享"],
    d:"五条收拢,第六章合龙。四课连起来是一条对象模型主线:对象何时生、何时死(OB),生下来怎么拿值(IN),复制时发生什么(CP),还有一份不随对象走的存储(SM)。第七章的构造析构顺序、切片、虚表,全是这条线的延伸。",
    help:"独立练习把第 ①② 条拧在一起:静态成员在构造函数跑之前就已经就绪——亲手验证一次。"},
-  {k:"variant",
+  {k:"repair",id:"C06",stage:"independent",cap:"实战 · 静态成员定义",q:"Counter 已声明 static int total。请在类外提供唯一定义。",help:"类外定义不重复写 static。"},
+   {k:"variant",
    q:"独立练习:CTest 的静态成员 cnt 初始为 100,构造函数里打印并自增它。main 里连续造两个对象,输出什么?",
    code:["struct CTest {","    static int cnt;","    CTest(){ printf(\"ctor sees %d\\n\", cnt); cnt++; }","};","int CTest::cnt = 100;","int main(){ CTest t; CTest u; }"],
    opts:["ctor sees 0 / ctor sees 1——静态成员到构造时才初始化","ctor sees 100 / ctor sees 101——静态成员先于构造函数体就绪","编译错误——构造函数不能碰静态成员","ctor sees 100 / ctor sees 100"],ci:1,kp:"kp_clstatic",
@@ -4591,7 +4607,8 @@ const CH5_LESSONS=[
    lines:["① 展开三步:抄定义 → 展开文本 → 再算术","② 副作用:参数出现几次求值几次","③ 条件编译:#ifdef 查名字 · #if 求值(未定义当 0)","④ 规范:宏名/消参/constexpr · 作用域不设防","","下一站:第 06 章 struct 与 class(已修)","对象生灭 → 初始化 → 拷贝 → static"],
    d:"第五章合龙:宏的世界没有类型,只有文本——展开写出来、副作用数次数、开关分两把钥匙、规范让你能不用就不用。课程主线回到对象模型:第六章四课(生灭、初始化、拷贝、static)已在校园里等你。",
    help:"第 05 章考核五题全部出自这三课+板书;过不了就回这几页把展开写出来。"},
-  {k:"variant",
+  {k:"repair",id:"C05",stage:"independent",cap:"实战 · 函数替换宏",q:"宏 SQ(n++) 会重复修改 n。改写成内联函数 sq，让实参只求值一次。",help:"形参只接收一次实参值，函数体使用 x。"},
+   {k:"variant",
    q:"独立练习:把 #define SIZE2 10 换成 constexpr int SIZE = 10,你【少掉】哪些坑?",
    code:["A. #define SIZE2 10","B. constexpr int SIZE = 10;"],
    opts:["没有区别,只是风格","少掉:无类型、无作用域、调试器不可见","少掉:副作用翻倍","少掉:预处理错误"],ci:1,kp:"kp_modern",
@@ -4861,7 +4878,7 @@ function markLessonAssisted(){
 }
 function browseLessonStep(step){
   if(!Number.isInteger(step)||step<0||step>=CUR.lesson.steps.length||step===CUR.step)return;
-  if(CUR.lesson.steps[CUR.step]&&CUR.lesson.steps[CUR.step].k==="variant")markLessonAssisted();
+  if(CUR.lesson.steps[CUR.step]&&["variant","repair"].includes(CUR.lesson.steps[CUR.step].k))markLessonAssisted();
   if(!CUR.review)CUR.learnStep=CUR.step;
   CUR.review=true;CUR.step=step;sfx("page");renderStep();
 }
@@ -4871,6 +4888,7 @@ function resumeLesson(){
 }
 function stepStage(st){return st.stage||({board:"teach",scene:"example",op:"example",predict:"practice",probe:"practice",variant:"independent"})[st.k]}
 const STAGE_LABELS={intro:"课程导入",teach:"概念讲解",example:"示例演示",practice:"随堂练习",recap:"课堂回顾",independent:"独立练习"};
+const PRACTICE_TASKS={"C02":{"name":"转换时机","q":"让 9 / 2 得到 4.5，而不是 4。你必须在除法之前做类型转换。","before":"int a=9,b=2;\ndouble result =","starter":"static_cast<double>(a / b)","after":";\nstd::cout<<result; // 4.5","solution":"static_cast<double>(a) / b","tip":"转换整个整数除法结果已经太晚；只转换 a 或 b。","explain":"先转换一个操作数，再执行浮点除法。"},"C03":{"name":"自增求值顺序","q":"消除 i++ + i++ 的未定义行为；按顺序保存两次旧值，再算 sum。","before":"int i=1;\n// 原写法：int sum=i++ + i++;\n","starter":"int sum=i++ + i++;","after":"\nstd::cout<<sum<<' '<<i; // 3 3","solution":"int left=i++;\nint right=i++;\nint sum=left+right;","tip":"先保存两次递增之前的值，再计算 sum。","explain":"把修改拆成顺序明确的语句，left=1、right=2、i=3。"},"C04":{"name":"悬垂引用","q":"返回局部对象的引用会悬垂。保持返回引用接口，修复生命周期。","before":"const int& getValue(){\n","starter":"const int value=42;\nreturn value;","after":"\n}\nint main(){std::cout<<getValue();}","solution":"static const int value=42;\nreturn value;","tip":"自动局部变量会销毁；static 局部对象活得更久。","explain":"static 局部对象在函数返回之后仍存在，引用有效。"},"C05":{"name":"函数替换宏","q":"宏 SQ(n++) 会重复修改 n。改写成内联函数 sq，让实参只求值一次。","before":"// 原宏 #define SQ(x) ((x)*(x))\n","starter":"#define sq(x) ((x)*(x))","after":"\nint main(){int n=2;int y=sq(n++);std::cout<<y<<' '<<n;}","solution":"inline int sq(int x){return x*x;}","tip":"形参只接收一次实参值，函数体使用 x。","explain":"函数只求值一次 n++，因此 y=4，n=3。"},"C06":{"name":"静态成员定义","q":"Counter 已声明 static int total。请在类外提供唯一定义。","before":"struct Counter{static int total;Counter(){++total;}};\n","starter":"static int Counter::total=0;","after":"\nint main(){Counter a,b;std::cout<<Counter::total;}","solution":"int Counter::total=0;","tip":"类外定义不重复写 static。","explain":"所有 Counter 对象使用同一个静态数据成员。"},"C07":{"name":"避免切片","q":"show 按值接收 Base 导致切片。改成保持动态绑定的参数形式。","before":"struct Base{virtual const char* name()const{return \"Base\";}};\nstruct Derived:Base{const char* name()const override{return \"Derived\";}};\n","starter":"void show(Base b)","after":"{std::cout<<b.name();}\nint main(){Derived d;show(d);} // Derived","solution":"void show(const Base& b)","tip":"传入 const Base&，不要拷贝基类子对象。","explain":"引用原来的 Derived 对象，虚调用可以到派生版本。"},"C08":{"name":"类模板偏特化","q":"编写 Box<T,T> 的偏特化，让相同类型组合的 tag=1。","before":"template<class T,class U>struct Box{static constexpr int tag=0;};\n","starter":"template<class T>struct Box<T>{static constexpr int tag=1;};","after":"\nstatic_assert(Box<int,int>::tag==1);\nstatic_assert(Box<int,double>::tag==0);","solution":"template<class T>struct Box<T,T>{static constexpr int tag=1;};","tip":"偏特化形状需写两个参数位置：Box<T,T>。","explain":"只有两个类型相同的组合命中偏特化。"},"C09":{"name":"迭代器失效","q":"删除 vector 中所有的 2：删除时接住 erase 的返回值，否则才 ++it。","before":"std::vector<int> v{2,3,2,4};\n","starter":"for(auto it=v.begin();it!=v.end();++it){if(*it==2)v.erase(it);}","after":"\n// 期待剩余 3、4；连续出现的 2 也要删掉","solution":"for(auto it=v.begin();it!=v.end();){if(*it==2)it=v.erase(it);else ++it;}","tip":"erase 会让旧迭代器失效。删除分支必须接住返回值。","explain":"只有未删除时才递增，避免使用失效迭代器。"},"C10":{"name":"lambda 生命周期","q":"返回引用捕获局部 n 的 lambda 会悬垂。改成安全的可修改闭包。","before":"std::function<int()> make(){int n=0;\n","starter":"return [&n]{return ++n;};","after":"\n}\n// f() 连续调用得到 1、2","solution":"return [n]() mutable {return ++n;};","tip":"捕获 n 的副本，并用 mutable 修改闭包中的副本。","explain":"闭包自带 n，函数返回后仍可安全使用。"},"C11":{"name":"异常对象切片","q":"按值捕获 std::exception 可能切片。改为规范的引用捕获。","before":"try{risky();}\n","starter":"catch(std::exception e)","after":"{std::cout<<e.what();}","solution":"catch(const std::exception& e)","tip":"常用 const T& 捕获异常。","explain":"避免基类对象拷贝及切片，保留多态。"},"C12":{"name":"async 执行策略","q":"显式选择 std::launch::async，避免默认策略可能 deferred。","before":"auto job=[]{return 42;};\nauto fut=","starter":"std::async(job)","after":";\nstd::cout<<fut.get();","solution":"std::async(std::launch::async,job)","tip":"在第一个参数写 std::launch::async。","explain":"明确指定异步启动策略，不依赖实现选择。"},"C13":{"name":"构建和调试","q":"链接 main.cpp 和 calc.cpp，使用 C++17 与 -g，输出 app。","before":"$ ","starter":"g++ main.cpp -o app","after":"\n// calc.cpp 定义了 main.cpp 调用的函数","solution":"g++ -std=c++17 -g main.cpp calc.cpp -o app","tip":"两个源文件都要编译；加上 -g 与 -std=c++17。","explain":"一起链接两个源文件，并保留调试符号。"}};
 function stepBoard(st){
   if(st.lines)return st.lines.join("\n");
   if(st.q){
@@ -4898,7 +4916,7 @@ function lessonChrome(zone,btnTxt,btnId){
    '<div class="classroom lecture"><div id="board"><div class="cap">'+ESC(st.cap||STAGE_LABELS[stage])+'</div><pre id="boardtx" aria-live="polite"></pre></div>'+
    '<div id="deskrow"><canvas id="teacher"></canvas><div id="speech" role="button" tabindex="0"><div class="who">教授</div><div class="tx" id="sp-tx"></div><div class="hint" id="sp-hint" hidden>点击继续 ▼</div></div></div>'+
    '<div class="lesson-tools"><button class="btn ghost small" id="bt-prev-step"'+(CUR.step===0?" disabled":"")+'>回看上一页</button>'+
-   '<button class="btn ghost small" id="bt-ask">'+(st.k==="variant"?"回看概念（计为提示）":"举手 · 再解释一下")+'</button></div>'+
+   '<button class="btn ghost small" id="bt-ask">'+(["variant","repair"].includes(st.k)?"回看概念（计为提示）":"举手 · 再解释一下")+'</button></div>'+
    '<div class="review" id="lesson-help" hidden></div></div>'+
    '<div id="stepzone">'+(zone||"")+"</div>"+
    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="btn" id="'+(btnId||"bt-next")+'"'+(btnTxt?"":" hidden disabled")+">"+(btnTxt||"继续")+"</button></div>";
@@ -4911,13 +4929,13 @@ function lessonChrome(zone,btnTxt,btnId){
   $("#bt-ask").onclick=()=>{
     const panel=$("#lesson-help");panel.hidden=!panel.hidden;
     if(panel.hidden)return;
-    if(st.k==="variant")markLessonAssisted();
+    if(st.k==="variant"||st.k==="repair")markLessonAssisted();
     const concepts=ls.steps.slice(0,CUR.step+1).filter(s=>s.k==="board");
     const preceding=concepts[concepts.length-1];
     const explanation=st.help||(preceding&&(preceding.help||preceding.d))||st.d;
     panel.innerHTML='<div class="rl">教授 · 换一个角度解释</div><div>'+ESC(explanation)+'</div>'+
       (preceding?'<div class="codebox"><pre>'+hl(preceding.lines.join("\n"))+'</pre></div>':"")+
-      (st.k==="variant"?'<div class="small dim">本次已查看提示，完成后记录为引导下完成。</div>':"");
+      (["variant","repair"].includes(st.k)?'<div class="small dim">本次已查看提示，完成后记录为引导下完成。</div>':"");
     stepSpeakInstant(explanation);
   };
   setLessonBoard(stepBoard(st));
@@ -4965,10 +4983,65 @@ function renderStep(){
   }else if(st.k==="variant"){
     CUR.vWrong=!!CUR.assisted[CUR.step];
     quizStep(st,true);
+  }else if(st.k==="repair"){
+    renderRepairStep(st);
   }else if(st.k==="op"){
     lessonChrome("","");renderOp(st);
   }
 }
+function validateRepair(id,answer){
+ const c=answer.replace(/\/\/[^\n]*$/gm,"").replace(/\s+/g,"");
+ switch(id){
+ case "C02":return /^static_cast<double>\(a\)\/b;?$/.test(c)||/^a\/static_cast<double>\(b\);?$/.test(c);
+ case "C03":return /^intleft=i\+\+;intright=i\+\+;intsum=left\+right;$/.test(c);
+ case "C04":return /^(staticconst|conststatic)intvalue=42;returnvalue;$/.test(c);
+ case "C05":return /^(inline|constexpr)intsq\(intx\)\{returnx\*x;\};?$/.test(c);
+ case "C06":return /^intCounter::total=0;$/.test(c);
+ case "C07":return /^voidshow\((constBase|Baseconst)&b\)$/.test(c);
+ case "C08":return /^template<(class|typename)T>structBox<T,T>\{staticconstexprinttag=1;\};$/.test(c);
+ case "C09":return /for\(autoit=v\.begin\(\);it!=v\.end\(\);\)/.test(c)&&/if\(\*it==2\)/.test(c)&&/it=v\.erase\(it\);/.test(c)&&/else(\{)?\+\+it;/.test(c)&&!/for\([^)]*\+\+it/.test(c);
+ case "C10":return /^return\[n\]\(\)mutable\{return\+\+n;\};$/.test(c);
+ case "C11":return /^catch\((conststd::exception|std::exceptionconst)&e\)$/.test(c);
+ case "C12":return /^std::async\(std::launch::async,job\);?$/.test(c);
+ case "C13":return /^g\+\+/.test(answer.trim())&&/(?:^|\s)-g(?:\s|$)/.test(answer)&&/(?:^|\s)-std=c\+\+17(?:\s|$)/.test(answer)&&/\bmain\.cpp\b/.test(answer)&&/\bcalc\.cpp\b/.test(answer)&&/-o\s+app(?:\s|$)/.test(answer);
+ default:return false;
+ }
+}
+
+function renderRepairStep(st){
+ const t=PRACTICE_TASKS[st.id],ls=CUR.lesson;
+ lessonChrome('<div class="qnum">CODE CHALLENGE · 亲手修复</div><div class="qstem">'+ESC(t.q)+'</div>'+
+ '<div class="repair-code"><pre>'+hl(t.before)+'</pre></div>'+
+ '<textarea id="repair-input" class="repair-edit" spellcheck="false" aria-label="自己修复的 C++ 代码"></textarea>'+
+ '<div class="repair-code"><pre>'+hl(t.after)+'</pre></div>'+
+ '<div class="small dim">结构核验：浏览器不执行 C++ 编译；等价实现可在 g++ 中验证。</div>'+
+ '<div id="repair-feedback" class="repair-feedback" aria-live="polite"></div>'+
+ '<button class="btn" id="repair-check">验证修复 ▶</button> <button class="btn ghost small" id="repair-show" hidden>查看参考修复（引导完成）</button>',"");
+ const input=$("#repair-input"),fb=$("#repair-feedback"),check=$("#repair-check"),show=$("#repair-show");
+ input.value=t.starter;let failed=0;
+ const explain=(ok,msg)=>{fb.innerHTML='<div class="review '+(ok?"ok":"ng")+'">'+ESC(msg)+'</div>';stepSpeakInstant(msg)};
+ stepSpeakInstant("先亲自编辑程序，再检查关键结构。这里不伪装成 C++ 编译器。");
+ check.onclick=()=>{
+  const code=input.value;
+  if(!validateRepair(st.id,code)){
+   failed++;sfx("bad");
+   if(!CUR.review&&failed===1){markLessonAssisted();noteMiscon("修复前："+t.starter.slice(0,60),"实际规则："+t.explain,"复习提示："+t.tip,{chapter:CUR.chapter,lesson:ls.id})}
+   explain(false,(failed>1?t.tip:"关键结构仍不符合本题要求。检查每个修改所依据的规则。"));
+   if(failed>=2)show.hidden=false;return;
+  }
+  sfx("good");check.disabled=true;show.hidden=true;input.readOnly=true;
+  if(!CUR.review){
+   SAVE.codeTasks=SAVE.codeTasks||{};
+   if(!SAVE.codeTasks[st.id]){SAVE.codeTasks[st.id]={assisted:!!CUR.assisted[CUR.step],code};addXP(4)}
+   mUp(ls.kp,CUR.assisted[CUR.step]?2:3);save();
+  }
+  setLessonBoard(t.before+"\n"+code+"\n"+t.after+"\n\n"+t.explain);
+  explain(true,"结构核验通过！"+t.explain+" 如采用其他等价写法，请在本机用 g++ 验证。");
+  const next=document.createElement("button");next.className="btn";next.textContent="继续 ▶";next.onclick=()=>{sfx("page");CUR.step++;renderStep()};fb.appendChild(next);
+ };
+ show.onclick=()=>{if(!CUR.review)markLessonAssisted();input.value=t.solution;show.hidden=true;explain(false,"参考实现已填入。请看懂后再点击验证。")};
+}
+
 function quizStep(st,isVariant){
   const ls=CUR.lesson;
   lessonChrome('<div class="qnum">'+(isVariant?"独立练习 · 可回看概念，使用提示会记录":"随堂练习 · 先判断，再看讲评")+'</div><div class="opts">'+st.opts.map((o,k)=>'<button data-k="'+k+'"><span class="ol">'+String.fromCharCode(65+k)+'</span><span>'+ESC(o)+"</span></button>").join("")+"</div>"+
