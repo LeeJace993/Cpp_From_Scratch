@@ -1,0 +1,7 @@
+# 本地工程文件:核验脚本与设计文档只留本地,不随仓库发布
+REVIEW.md
+design-cards.md
+question-map.md
+tests/
+00-how-to-use/
+01-compilation-model/
