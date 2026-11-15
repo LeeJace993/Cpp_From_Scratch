@@ -4881,15 +4881,14 @@ function renderLessonHub(ci){
     const nm=["未接触","接触过","引导下完成","独立答题"][m];
     return '<span class="mchip'+(m?" s"+m:"")+'">'+KPS[ls.kp]+" · "+nm+"</span>";
   }).join("")+"</div>"+
-  '<div style="margin-top:12px"><button class="btn" id="bt-chexam" '+(chReady(ci)?"":"disabled")+">章节考核 ▶(5 题,对 4 过)</button> "+
-  '<button class="btn ghost small" id="bt-back3">课程表</button></div>'+
-  (chReady(ci)?"":'<div class="small dim" style="margin-top:8px">上完'+group.length+'节课,考核开放。</div>')+"</div>";
+  '<div style="margin-top:12px"><button class="btn ghost" id="bt-chexam">五题考核 ▶</button> '+
+  '<button class="btn ghost small" id="bt-back3">课程表</button></div></div>';
   $("#scr-campus").innerHTML=h;
   $("#bt-back2").onclick=$("#bt-back3").onclick=()=>{sfx("click");renderChapters()};
   $("#bt-direct-challenge").onclick=()=>{sfx("click");openChapterChallenge(ci)};
   $("#bt-direct-exam").onclick=()=>{sfx("click");startExam(ci)};
   $$("#scr-campus .lessonrow").forEach(el=>{el.onclick=()=>{sfx("click");openLesson(ci,+el.dataset.i)}});
-  const ex=$("#bt-chexam");if(ex&&!ex.disabled)ex.onclick=()=>{sfx("click");startExam(ci)};
+  const ex=$("#bt-chexam");if(ex)ex.onclick=()=>{sfx("click");startExam(ci)};
 }
 
 function openChapterChallenge(ci){
@@ -5111,11 +5110,20 @@ function renderRepairStep(st){
   if(!CUR.review){
    SAVE.codeTasks=SAVE.codeTasks||{};
    if(!SAVE.codeTasks[st.id]){SAVE.codeTasks[st.id]={assisted:!!CUR.assisted[CUR.step],code};addXP(4)}
-   mUp(ls.kp,CUR.assisted[CUR.step]?2:3);save();
+   mUp(ls.kp,CUR.assisted[CUR.step]?2:3);
+   const lv=LEVELS[CUR.chapter],already=!!SAVE.done[lv.id];
+   SAVE.done[lv.id]=Math.max(SAVE.done[lv.id]||0,CUR.assisted[CUR.step]?2:3);
+   SAVE.chapterChallenges=SAVE.chapterChallenges||{};
+   SAVE.chapterChallenges[lv.id]={code,assisted:!!CUR.assisted[CUR.step],completedAt:Date.now()};
+   save();if(!already)addXP(20);
   }
   setLessonBoard(t.before+"\n"+code+"\n"+t.after+"\n\n"+t.explain);
-  explain(true,"结构核验通过！"+t.explain+" 如采用其他等价写法，请在本机用 g++ 验证。");
+  explain(true,"结构核验通过！"+t.explain+" 本章已通过，下一章已解锁。如采用其他等价写法，请在本机用 g++ 验证。");
   const next=document.createElement("button");next.className="btn";next.textContent="继续 ▶";next.onclick=()=>{sfx("page");CUR.step++;renderStep()};fb.appendChild(next);
+  const advance=document.createElement("button");advance.className="btn ghost";
+  advance.style.marginLeft="8px";advance.textContent=CUR.chapter+1<LEVELS.length?"直接下一章 ▶":"查看毕业典礼 ▶";
+  advance.onclick=()=>{if(CUR.chapter+1<LEVELS.length)renderLessonHub(CUR.chapter+1);else renderCeremony()};
+  fb.appendChild(advance);
  };
  show.onclick=()=>{if(!CUR.review)markLessonAssisted();input.value=t.solution;show.hidden=true;explain(false,"参考实现已填入。请看懂后再点击验证。")};
 }
