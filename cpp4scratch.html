@@ -255,6 +255,8 @@ hr.px{border:none;border-top:3px solid var(--line);margin:14px 0}
   <span class="lv" id="st-lv">LV 1</span>
   <span class="grow xpbar"><i id="st-xp" style="transform:scaleX(0)"></i></span>
   <span class="dim" id="st-misc">XP 0 · 通关 0/13</span>
+  <button id="bt-sfx" title="开关提示音" aria-pressed="true">音效 开</button>
+  <button id="bt-music" title="开关低音量背景音乐" aria-pressed="false">音乐 关</button>
   <button id="bt-reset">重开</button>
 </div>
 
@@ -4647,12 +4649,38 @@ const KP_CHECK={kp_link:"重复发生在一个 TU 内还是多个 TU 之间？�
 /* 音效 */
 let AC=null;
 function tone(f,t,dur,vol){const g=AC.createGain();g.gain.setValueAtTime(vol,AC.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+t+dur);g.connect(AC.destination);const o=AC.createOscillator();o.type="square";o.frequency.value=f;o.connect(g);o.start(AC.currentTime+t);o.stop(AC.currentTime+t+dur)}
-function sfx(k){try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
+function sfx(k){try{if(SAVE.soundOff)return;if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
  if(k==="click")tone(660,0,.05,.06);
  else if(k==="good"){tone(660,0,.09,.08);tone(990,.09,.14,.08)}
  else if(k==="bad"){tone(220,0,.16,.09);tone(160,.14,.2,.09)}
  else if(k==="win"){[523,659,784,1047].forEach((f,i)=>tone(f,i*.1,.12,.08))}
  else if(k==="page")tone(440,0,.04,.05)}catch(e){}}
+
+/* 轻量掌机 BGM，仅玩家点击后开启，保持原有安静阅读体验。 */
+let BGM_TIMER=null,BGM_POS=0;
+const BGM_NOTES=[392,0,523.25,0,587.33,523.25,440,0,392,0,329.63,0,349.23,392,0,0,440,0,523.25,0,659.25,587.33,523.25,0,440,0,392,0,349.23,392,0,0];
+function bgmTick(){
+  if(!SAVE.musicOn){stopBgm();return}
+  try{
+    if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended")AC.resume().catch(()=>{});
+    const f=BGM_NOTES[BGM_POS++%BGM_NOTES.length];
+    if(f){const osc=AC.createOscillator(),gain=AC.createGain();
+      osc.type="triangle";osc.frequency.value=f;
+      gain.gain.setValueAtTime(.012,AC.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+.23);
+      osc.connect(gain);gain.connect(AC.destination);
+      osc.start();osc.stop(AC.currentTime+.23)}
+  }catch(e){stopBgm()}
+}
+function stopBgm(){if(BGM_TIMER){clearInterval(BGM_TIMER);BGM_TIMER=null}}
+function startBgm(){stopBgm();BGM_POS=0;bgmTick();if(SAVE.musicOn)BGM_TIMER=setInterval(bgmTick,320)}
+function syncAudioButtons(){
+  const sound=$("#bt-sfx"),music=$("#bt-music");
+  if(sound){sound.textContent="音效 "+(SAVE.soundOff?"关":"开");sound.setAttribute("aria-pressed",String(!SAVE.soundOff))}
+  if(music){music.textContent="音乐 "+(SAVE.musicOn?"开":"关");music.setAttribute("aria-pressed",String(!!SAVE.musicOn))}
+}
+
 /* 像素小人 */
 function drawSprite(cv,G,P,scale){cv.width=G[0].length*scale;cv.height=G.length*scale;const g=cv.getContext("2d");G.forEach((row,y)=>[...row].forEach((ch,x)=>{if(P[ch]){g.fillStyle=P[ch];g.fillRect(x*scale,y*scale,scale,scale)}}))}
 function drawTeacher(cv){const G=["....KKKK....","...KKKKKK...","..KKKKKKKK..","..KSSSSSSK..","..KSWSSWSK..","..KSSSSSSK..","...SSSSSS...","..WWWWWWW...",".TGGGGGGGT..",".GGGGGGGGG..",".GGGGGGGGG..",".GGGGGGGGG..",".GGGGGGGG...","..GGGGGG....","..BB..BB....",".KKK..KKK..."];const P={K:"#12142c",S:"#f2c9a0",W:"#f5f6ff",G:"#2a3160",T:"#ffd23f",B:"#12142c"};drawSprite(cv,G,P,7)}
@@ -4674,7 +4702,7 @@ const SCREENS=["scr-title","scr-enroll","scr-campus","scr-class","scr-exam","scr
 function showScreen(id){SCREENS.forEach(s=>{const el=$("#"+s);if(el)el.hidden=s!==id});scrollTo(0,0)}
 /* 状态条 */
 function passedCount(){let n=0;for(let i=0;i<LEVELS.length;i++)if(SAVE.done[LEVELS[i].id])n++;return n}
-function updateStatus(){const n=passedCount();$("#st-lv").textContent="LV "+(n+1);$("#st-xp").style.transform="scaleX("+Math.min(1,SAVE.xp/700)+")";$("#st-misc").textContent="XP "+SAVE.xp+" · 考核通过 "+n+"/13"}
+function updateStatus(){const n=passedCount(),codes=Object.keys(SAVE.codeTasks||{}).length;$("#st-lv").textContent="LV "+(n+1);$("#st-xp").style.transform="scaleX("+Math.min(1,SAVE.xp/700)+")";$("#st-misc").textContent="XP "+SAVE.xp+" · 章节 "+n+"/13 · 代码实战 "+codes+"/12"}
 function addXP(n){SAVE.xp+=n;save();updateStatus()}
 /* 误区档案 */
 function noteMiscon(think,found,check,src){SAVE.miscon.unshift({think:think.slice(0,80),found:found,check:check,src:src||null,t:Date.now()});if(SAVE.miscon.length>40)SAVE.miscon.length=40;save()}
@@ -4845,7 +4873,7 @@ function renderLessonHub(ci){
   });
   h+='<div class="panel"><div style="font-weight:900;margin-bottom:6px">掌握度(图书馆可看明细)</div><div class="mrow">'+group.map(ls=>{
     const m=SAVE.mastery[ls.kp]||0;
-    const nm=["未接触","接触过","引导下完成","独立掌握"][m];
+    const nm=["未接触","接触过","引导下完成","独立答题"][m];
     return '<span class="mchip'+(m?" s"+m:"")+'">'+KPS[ls.kp]+" · "+nm+"</span>";
   }).join("")+"</div>"+
   '<div style="margin-top:12px"><button class="btn" id="bt-chexam" '+(chReady(ci)?"":"disabled")+">章节考核 ▶(5 题,对 4 过)</button> "+
@@ -5077,7 +5105,7 @@ function finishLesson(){
   $("#scr-class").innerHTML=
    '<div style="text-align:center;padding-top:20px"><div class="disp" style="font-size:10px;color:var(--cyan);letter-spacing:2px">'+(CUR.review?"REVIEW · 本次复习结束":"LESSON CLEAR · 课时完成")+'</div>'+
    "<h2>"+ls.title+"</h2>"+
-   '<div class="mrow" style="justify-content:center"><span class="mchip s'+m+'">'+KPS[ls.kp]+" · "+["未接触","接触过","引导下完成","独立掌握"][m]+"</span></div>"+
+   '<div class="mrow" style="justify-content:center"><span class="mchip s'+m+'">'+KPS[ls.kp]+" · "+["未接触","接触过","引导下完成","独立答题"][m]+"</span></div>"+
    '<div class="panel" style="max-width:560px;margin:14px auto;text-align:left"><b>下一站:</b> 本章课时全上完,考场开放章节考核(5 题,独立做,对 4 过)。没到独立掌握的知识点,办公室有你的误区档案。</div>'+
    (CUR.review&&!((SAVE[key]||{})[ls.id]||{}).done?'<button class="btn" id="bt-resume-lesson">继续正式学习</button> ':"")+
    '<button class="btn" id="bt-hub2">回课时中心</button></div>';
@@ -6694,7 +6722,7 @@ function renderLibrary(){
    '<div class="panel" style="padding:12px 16px;font-size:14px">你的误区笔记本(自动生成)+ 掌握度一览。<button class="btn ghost small" id="bt-lib-back" style="float:right">校园</button></div>'+
    '<div class="panel"><div style="font-weight:900;margin-bottom:8px">掌握度一览(互动课时)</div>'+CH_LESSONS.map((g,ci)=>'<div style="margin-bottom:10px"><div class="small dim" style="margin-bottom:4px">第 '+(ci+1)+' 章</div><div class="mrow">'+g.map(ls=>{
      const m=SAVE.mastery[ls.kp]||0;
-     return '<span class="mchip'+(m?" s"+m:"")+'">'+KPS[ls.kp]+" · "+["未接触","接触过","引导下完成","独立掌握"][m]+"</span>";
+     return '<span class="mchip'+(m?" s"+m:"")+'">'+KPS[ls.kp]+" · "+["未接触","接触过","引导下完成","独立答题"][m]+"</span>";
    }).join("")+"</div></div>").join("")+
    '<div class="panel"><div style="font-weight:900;margin-bottom:8px">误区笔记本 ('+ms.length+' 条)</div>'+
    (ms.length?ms.map(m=>'<div class="note"><div class="n1">'+ESC(m.think)+'</div><div class="n2">'+ESC(m.found)+'</div><div class="n3">'+ESC(m.check)+"</div></div>").join(""):'<div class="small dim">空笔记本是最好的笔记本——但答错而记下的,比全对而空着的更有用。</div>')+"</div>";
@@ -6719,9 +6747,12 @@ function renderCeremony(){
   $("#bt-cer-back").onclick=()=>{sfx("click");renderCampus();showScreen("scr-campus")};
 }
 /* ---- 启动 ---- */
+$("#bt-sfx").onclick=()=>{SAVE.soundOff=!SAVE.soundOff;save();syncAudioButtons();if(!SAVE.soundOff)sfx("click")};
+$("#bt-music").onclick=()=>{SAVE.musicOn=!SAVE.musicOn;save();syncAudioButtons();if(SAVE.musicOn)startBgm();else stopBgm()};
 $("#bt-reset").onclick=function(){
   if(this.dataset.arm){SAVE={name:"学员",enrolled:false,place:0,xp:0,done:{},mastery:{},miscon:[],ch1:{},ch2:{},ch3:{},ch4:{},ch5:{},ch6:{},ch7:{},ch8:{},ch9:{},ch10:{},ch11:{},ch12:{},ch13:{}};save();renderTitle();showScreen("scr-title");this.textContent="重开";delete this.dataset.arm}
   else{this.dataset.arm="1";this.textContent="确认清档?";setTimeout(()=>{this.textContent="重开";delete this.dataset.arm},2500)}
 };
-renderTitle();updateStatus();
+SAVE.musicOn=false; // 背景音乐始终由玩家主动开启，不自动播放
+renderTitle();updateStatus();syncAudioButtons();
 </script>
