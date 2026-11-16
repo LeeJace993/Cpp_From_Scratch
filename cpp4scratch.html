@@ -1049,6 +1049,7 @@ const CH1_LESSONS=[
    lines:["namespace O { int a = 2; }", "int main(){", "    int a = 4;", "    using namespace O;", "    // 直接访问 a，仍是局部变量：4", "    // 显式访问 O::a，才是命名空间变量：2", "}", "", "using namespace O 让 O 的名字参与查找，不会改写已有变量"],
    d:"最后补上独立练习需要的 using。它允许命名空间的名字参与查找，但在这个例子中，main 已经有局部 a，直接写 a 仍然找到它。要访问 O 中那个值为二的变量，可以明确写 O::a。不能把 using 理解成覆盖所有同名变量。",
    help:"同一位置写 a 和 O::a，是两种不同查找。前者在本例找到局部四，后者按限定找到 O 里的二。using 不会把二赋值给局部 a，也不会自动产生这道题里的二义性。"},
+  {k:"repair",id:"C01",stage:"independent",cap:"实战 · 头文件重复定义",q:"counter.h 同时被 main.cpp 与 worker.cpp 包含。请将原本重复的变量定义改为头文件中的 extern 声明和 counter.cpp 中的唯一定义，按这两个顺序填写。",help:"头文件 extern int counter;，源文件 int counter = 0;。"},
   {k:"variant",
    q:"独立变式:全局 int a=1; namespace O{int a=2;} main 里局部 int a=4; 然后写了 using namespace O; 之后直接访问 a,得到什么?",
    opts:["编译错误——二义性","4——局部变量在查找路线中先命中,直接遮蔽","2","1"],ci:1,kp:"kp_ns",
@@ -4674,7 +4675,7 @@ function bgmTick(){
   }catch(e){stopBgm()}
 }
 function stopBgm(){if(BGM_TIMER){clearInterval(BGM_TIMER);BGM_TIMER=null}}
-function startBgm(){stopBgm();BGM_POS=0;bgmTick();if(SAVE.musicOn)BGM_TIMER=setInterval(bgmTick,320)}
+function startBgm(){stopBgm();BGM_POS=0;bgmTick();if(SAVE.musicOn){try{BGM_TIMER=setInterval(bgmTick,320)}catch(e){}}}
 function syncAudioButtons(){
   const sound=$("#bt-sfx"),music=$("#bt-music");
   if(sound){sound.textContent="音效 "+(SAVE.soundOff?"关":"开");sound.setAttribute("aria-pressed",String(!SAVE.soundOff))}
@@ -4702,7 +4703,7 @@ const SCREENS=["scr-title","scr-enroll","scr-campus","scr-class","scr-exam","scr
 function showScreen(id){SCREENS.forEach(s=>{const el=$("#"+s);if(el)el.hidden=s!==id});scrollTo(0,0)}
 /* 状态条 */
 function passedCount(){let n=0;for(let i=0;i<LEVELS.length;i++)if(SAVE.done[LEVELS[i].id])n++;return n}
-function updateStatus(){const n=passedCount(),codes=Object.keys(SAVE.codeTasks||{}).length;$("#st-lv").textContent="LV "+(n+1);$("#st-xp").style.transform="scaleX("+Math.min(1,SAVE.xp/700)+")";$("#st-misc").textContent="XP "+SAVE.xp+" · 章节 "+n+"/13 · 代码实战 "+codes+"/12"}
+function updateStatus(){const n=passedCount(),codes=Object.keys(SAVE.codeTasks||{}).length;$("#st-lv").textContent="LV "+(n+1);$("#st-xp").style.transform="scaleX("+Math.min(1,SAVE.xp/700)+")";$("#st-misc").textContent="XP "+SAVE.xp+" · 章节 "+n+"/13 · 代码实战 "+codes+"/13"}
 function addXP(n){SAVE.xp+=n;save();updateStatus()}
 /* 误区档案 */
 function noteMiscon(think,found,check,src){SAVE.miscon.unshift({think:think.slice(0,80),found:found,check:check,src:src||null,t:Date.now()});if(SAVE.miscon.length>40)SAVE.miscon.length=40;save()}
@@ -6410,7 +6411,7 @@ function runPickOp(kind,v,onDone){
               const nx=document.createElement("button");nx.className="btn";nx.style.marginTop="12px";nx.textContent="下一个场景 ▶";
               nx.onclick=()=>{sfx("page");renderScen()};v.appendChild(nx);
             }else{
-              $("#pp-cap").textContent=op.done;stepSpeakInstant(op.done);if(onFix)onFix({ok:true});
+              $("#pp-cap").textContent=op.done;stepSpeakInstant(op.done);if(onDone)onDone({ok:true});
             }
           }
         });
