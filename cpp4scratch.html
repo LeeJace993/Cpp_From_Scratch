@@ -15,7 +15,7 @@
   --green:#5fe08a; --red:#ff5d73; --cyan:#5ad0ff; --purple:#b48cff;
   --board:#123326; --board-line:#2c5c44; --chalk:#e9f2e4; --chalk-dim:#9dbfa8;
   --shadow:rgba(0,0,0,.5);
-  --f-disp:'Press Start 2P',monospace;
+  --f-disp:'Press Start 2P','Noto Sans SC',monospace;
   --f-body:'Noto Sans SC',system-ui,sans-serif;
   --f-mono:'JetBrains Mono','Noto Sans SC',monospace;
 }
@@ -4969,7 +4969,7 @@ function openChapterChallenge(ci){
   '<button class="btn ghost small" id="challenge-answer-'+k+'" hidden>参考答案</button></div>'+
   (doneRec?'<div class="small dim">已通过。重新独立完成（不看提示与参考答案）可把本章升级为 3 星。</div>':'')+'</div>';
  });
- $("#scr-class").innerHTML='<div class="disp">CHAPTER '+(ci+1)+' · '+ESC(LEVELS[ci].name)+' / CODE CHALLENGE</div>'+
+ $("#scr-class").innerHTML='<div class="disp" style="font-size:10px;color:var(--cyan);letter-spacing:2px;margin:0 0 14px">CHAPTER '+(ci+1)+' · '+ESC(LEVELS[ci].name)+' — 代码实战 / CODE CHALLENGE</div>'+
  '<div class="panel" style="border-color:var(--gold-dk)"><div class="qnum">CHAPTER CHALLENGE · 本章直通</div>'+
  '<div style="font-weight:900">4 段小节代码实战，全部通过即解锁下一章</div>'+
  '<div class="small dim" style="margin-top:6px">已完成 '+doneCount+' / 4。使用提示或参考答案会记为引导完成；也可以直接做五题考核。</div>'+
