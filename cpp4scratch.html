@@ -935,6 +935,7 @@ const CH1_LESSONS=[
    stage:"recap",
    lines:["① include 引入文本，两个 .cpp 分别形成两个 TU", "② 普通外部变量：多处声明、一份定义", "③ 保护宏处理 TU 内重复包含，不消除本例的跨 TU 定义冲突", "", "修复：头文件 extern int counter;", "      一个 .cpp 中 int counter = 0;"],
    d:"回顾完整因果链：头文件里的变量定义被两个源文件各引入一次，各自编译成功，链接时遇到两份定义。我们把头文件改成声明、把定义留在一个源文件里，保留共享关系并消除冲突。下面换个变量名，请你独立判断。"},
+  {k:"repair",id:"C01-1",stage:"independent",cap:"实战 · include 缺失",q:"main.cpp 用了 std::cout 却报 'cout' was not declared。把缺的那行补在最上面。",help:"std::cout 住在 <iostream> 里;include 要放在文件顶部。"},
   {k:"variant",
    q:"独立练习：score.h 中的 int score = 0; 被两个 .cpp 引入。要让它们共享同一个 score，应该怎样修改？",
    code:["// score.h", "int score = 0;", "// game.cpp 与 main.cpp 都引入 score.h"],
@@ -970,6 +971,7 @@ const CH1_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · 用两步判断",
    lines:["第一步：看它声明的是变量，还是函数", "变量：extern int x; 是声明；int x; 是定义", "      extern int x = 0; 仍是定义", "函数：有函数体是定义；仅给原型是声明", "", "第二步：看这份定义是否会被多个 TU 引入", "普通外部变量 / 非 inline 函数：定义留在一个 .cpp"],
    d:"这节课把第一课的修复理由补全了。先分变量和函数，再读完整声明；不要只看 extern，也不要只看有没有等号。最后再问：如果把这一行放进头文件，会不会让多个翻译单元各自得到一份定义？"},
+  {k:"repair",id:"C01-2",stage:"independent",cap:"实战 · 头文件放声明",q:"counter.h 里写了函数体,两个 TU 各得一份定义,链接报 multiple definition。改成声明。",help:"头文件放声明(带分号),函数体移到唯一一个 .cpp。"},
   {k:"variant",
    q:"独立练习：要让多个 .cpp 使用同一普通变量和同一普通函数，哪组内容适合放在公共头文件中？",
    opts:["int total; 和 void reset() {}","extern int total = 0; 和 void reset();","extern int total; 和 void reset();，定义放在一个 .cpp 中"],ci:2,kp:"kp_odr",
@@ -1006,6 +1008,7 @@ const CH1_LESSONS=[
   {k:"board",cap:"扩展 · 头文件里的 const 常量为什么也能用？",
    lines:["// 普通命名空间作用域写法，没有 extern / inline", "const int MAX = 100;", "", "本例 MAX 默认具有内部链接", "两个 .cpp 引入后，各自拥有一个 MAX 实体", "因此不会产生同一个外部变量的重复定义冲突", "", "int MAX = 100; 则是普通外部变量定义，不能照搬这个结论"],
    d:"章节考核还会比较 const 常量与普通变量。这里引入一个相关规则：像黑板上这样，命名空间作用域的 const 变量默认具有内部链接，各个翻译单元得到各自的实体。它与 static 示例的共同点是内部链接。不是因为 const 变量只有声明，也不是因为 const 必然不占存储。"},
+  {k:"repair",id:"C01-3",stage:"independent",cap:"实战 · extern 声明",q:"counter.cpp 已有 int g_count=5; 本文件也要用它,再写一份定义就两份了。改成只声明。",help:"extern = 只声明不定义——定义全局只有一份。"},
   {k:"variant",
    q:"独立变式:去掉 static,改成 a.cpp 里定义 int g_count;、a.h 里只留 extern int g_count;。同样流程,最后一次打印是多少?",
    opts:["1——副本还在","4——全程序只剩一个 g_count,+1 和 +3 落在同一份上","0","3"],ci:1,kp:"kp_static",
@@ -1113,6 +1116,7 @@ const CH2_LESSONS=[
   {k:"board",cap:"补充概念 · 字符数组与字符串长度",
    lines:["#include <cstring>","char word[] = \"cat\";", "", "实际元素：'c'、'a'、't'、'\\0'", "sizeof(word) == 4       // 数组包括结尾的空字符", "std::strlen(word) == 3  // 数到第一个空字符为止，不含它", "", "sizeof 量对象大小；strlen 检查字符串内容"],
    d:"独立练习前再介绍一个函数：strlen。字符串字面量会在末尾加一个空字符，写作反斜杠零。数组会存下这个字符，所以 cat 的数组有四个元素；strlen 从头检查内容，遇到第一个空字符停止，得到三个。两者回答的问题不同。"},
+  {k:"repair",id:"C02-1",stage:"independent",cap:"实战 · sizeof 不求值",q:"sizeof(n++) 里的 ++ 根本不执行。改成自增真实发生,再量大小。",help:"sizeof 的操作数不求值——想要副作用,把它写成独立语句。"},
   {k:"variant",
    q:"独立练习：char s[] = \"ab\"; 那么 sizeof(s) 和 strlen(s) 各是多少？",
    code:["#include <cstring>","char s[] = \"ab\";"],
@@ -1164,6 +1168,7 @@ const CH2_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · const 的三个位置",
    lines:["① const 变量：必须初始化，不能赋值","② const 在 * 左：指向的对象只读（指针可换指向）","③ const 在 * 右：指针本身只读（对象可写）","④ const 引用：可绑临时值","","加上第一章：文件作用域 const 默认内部链接，","各 TU 一份私有副本，所以能进头文件"],
    d:"三条位置规则加一条第一章的回声，这节课就齐了。特别注意最后一条：头文件里的 const 常量之所以合法，是因为它默认内部链接，各文件各一份——不是因为它“不算定义”。"},
+  {k:"repair",id:"C02-2",stage:"independent",cap:"实战 · const 贴对位置",q:"p 要能改指向,但 p 所指的值不许改。把 const 贴到 * 的左边。",help:"const 在 * 左边管「所指的值」;贴在 p 身上(* 右边)才锁指针本身。"},
   {k:"variant",
    q:"独立练习：下面四行放进头文件、被两个 .cpp 各引入一次，哪一行会出问题？",
    code:["① const int MAX = 100;","② int MAX = 100;","③ const int* const p = &MAX;","④ extern int total;"],
@@ -1215,6 +1220,7 @@ const CH2_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · auto 的两条规则",
    lines:["① 按值拷贝：去引用、去顶层 const","② 地址传递：底层 const 保留（const int*）","","要别名 → auto&","要只读别名 → const auto&","","考试高频：auto a = i;（i 是 int&）推 int，改 a 不影响 i"],
    d:"两条规则收拢。考试里最常见的坑就是第一条：auto 从引用表达式推导，得到的是普通类型。独立练习里我们再确认一次。"},
+  {k:"repair",id:"C02-3",stage:"independent",cap:"实战 · auto 引用遍历",q:"遍历大容器只读不拷贝。auto 按值每回合复制一个 string,改成 const 引用绑定。",help:"auto 按值拷贝;加 & 才是引用——只读再补 const。"},
   {k:"variant",
    q:"独立练习：int i = 5; int& r = i; 之后执行 auto& b = r; b = 9; 此时 i 的值是多少？",
    code:["int i = 5;","int& r = i;","auto& b = r;","b = 9;"],
@@ -1349,6 +1355,7 @@ const CH7_LESSONS=[
   {k:"board",cap:"补充示范 · 派生类拷贝时，基类怎样初始化？",
    lines:["D(const D& o) : B(o), y(o.y) {}", "  // B(o) 调用基类拷贝构造，拷贝 o 的基类部分", "", "D(const D& o) { y = o.y; }", "  // 没写基类初始化项：基类进行默认初始化", "  // 本例调用 B()，不会自动改为 B(o)", "", "初始化发生在构造函数体之前；基类没有可用默认构造时会报错"],
    d:"独立练习前补上拷贝构造的初始化规则。你自己编写派生类拷贝构造时，若希望拷贝基类部分，需要在初始化列表写 B(o)。若省略，基类会默认初始化；在本例中就是调用 B()。编译器不会因为这个函数名叫拷贝构造，就替你补上 B(o)。"},
+  {k:"repair",id:"C07-1",stage:"independent",cap:"实战 · 基类初始化",q:"Base 没有默认构造,派生构造必须把参数转交给基类。写基类初始化。",help:"基类子对象在成员之前构造——参数经初始化列表交给基类构造。"},
   {k:"variant",
    q:"独立练习：D 的拷贝构造写成 D(const D& o){ y = o.y; }（没有把 o 交给基类）。执行 D e(d); 时，基类子对象发生了什么？",
    code:["struct B { int x; B(){ x = 1; printf(\"B() \"); }","         B(const B& o){ x = o.x; printf(\"B(c) \"); } };","struct D : B { int y; D(){ y = 0; }","    D(const D& o){ y = o.y; printf(\"D(c) \"); } };","D d; d.x = 2; d.y = 2;","D e(d);"],
@@ -1403,6 +1410,7 @@ const CH7_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · 多态的机制清单",
    lines:["① 编译期：检查静态类型里的虚函数 → 合法性","② 运行期：vptr → vtable → 选版本","③ 覆盖契约：签名完全一致（含 const）","④ override = 检查器，不改变虚性","⑤ 多态基类析构一律 virtual","","独立练习：给“隐藏”留一个入口"],
    d:"五条收拢。注意第⑤条的考试形态：题库的 Derive2→Derive1→Base 输出题、以及“哪种 delete 是 UB”判断题，全从它出。独立练习换个角度考覆盖。"},
+  {k:"repair",id:"C07-2",stage:"independent",cap:"实战 · 补上 virtual",q:"派生的 name 想覆盖基类,基类却没写 virtual——现在只是隐藏。补上 virtual 与 override。",help:"没有 virtual 就没有虚表——override 只能在真覆盖时使用。"},
   {k:"variant",
    q:"独立练习：struct B { virtual ~B(){ printf(\"~B \"); } }; struct D : B { ~D(){ printf(\"~D \"); } }; 局部对象 D d 离开作用域，输出什么？",
    code:["{","    D d;","}   // 离开作用域"],
@@ -1463,6 +1471,7 @@ const CH7_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · 静态绑定的三张脸",
    lines:["① 非虚同名函数：按指针的静态类型","② 默认参数：按指针的静态类型（身体可以不是）","③ 构造/析构期间：虚函数落到当前层","④ 同名新函数藏住基类整个重载集（using 可找回）","⑤ 检查工具：身体动态？默认值静态？查找停在几层？","","独立练习：把覆盖契约补完整"],
    d:"三条静态绑定规则收拢，外加隐藏的重载集规则。答题时先问三个问题：这半边查表吗？这个值编译期填吗？查找停在几层？独立练习把覆盖契约和 override 串起来。"},
+  {k:"repair",id:"C07-3",stage:"independent",cap:"实战 · using 引入重载",q:"派生的 f(double) 把基类的 f(int) 整组隐藏了。用 using 把基组搬回来。",help:"名字查找按作用域整组遮挡:派生一声明 f,基类整组 f 都看不见——using 搬回来。"},
   {k:"variant",
    q:"独立练习：想让“通过基类指针调用时执行派生版本”成立，除了函数体逻辑，声明上必须保证什么？",
    opts:["派生类函数前加 virtual 就够","基类写 virtual，且派生类签名完全一致（含 const）——最好再加 override","两边都写 virtual，参数可以不同（编译器就近匹配）","把函数设为 static 即可"],ci:1,kp:"kp_hiding",
@@ -1577,6 +1586,7 @@ const CH8_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · 图纸的图纸",
    lines:["① 模板不是函数,是造函数的图纸","② 实例化在编译期、按实参类型进行","③ 没被调用的模板不生成代码","④ 每种实例化一套 static,各数各的","⑤ 先归档「哪套」,再算「数到几」","","独立练习:无参模板的显式调用"],
    d:"五条收拢。第④条直接就是考核 q1 的答案形态。独立练习把「无参数、靠显式指定」的调用形式补上——那是本章 q3 显式指定的前身。"},
+  {k:"repair",id:"C08-1",stage:"independent",cap:"实战 · 显式模板实参",q:"两个实参类型不同(4 与 4.2),T 推不出唯一结论。显式点名 T。",help:"T 只能推一个:实参类型不一致时自己点名 T,让转换接手。"},
   {k:"variant",
    q:"独立练习:template<typename T> int g(){ static int c = 0; return ++c; }(没有参数,推导不了)。依次执行三条赋值语句后,输出什么?",
    code:["int a = g<int>();","int b = g<double>();","int c = g<int>();","printf(\"%d %d %d\", a, b, c);"],
@@ -1635,6 +1645,7 @@ const CH8_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · 定义位置判定表",
    lines:["① 模板定义 → 头文件(实例化要看见全文)","② 普通函数定义 → 源文件(没有豁免,multiple definition)","③ 类内函数 / constexpr → 头文件(各自的豁免)","④ 显式特化定义 → 跟主模板进头文件(incomplete type 教训)","⑤ 显式实例化定义 → 一个源文件即可","","独立练习:四样东西的合法性判定"],
    d:"五条收拢——第②⑤条合起来就是「声明进头文件、定义进源文件」的老规矩,模板只改了第①条。独立练习把这五条换成一道四选一。"},
+  {k:"repair",id:"C08-2",stage:"independent",cap:"实战 · 模板定义进头文件",q:"模板函数体留在 .cpp,别的 TU 只看到声明——链接报 undefined reference。定义搬进头文件。",help:"模板靠「使用时现场造代码」豁免 ODR——定义必须让使用它的 TU 看得见。"},
   {k:"variant",
    q:"独立练习:下面哪一组,全都合法出现在头文件里?",
    opts:["函数模板定义、类内定义的成员函数、constexpr 函数、显式特化定义","普通函数定义、函数模板定义、constexpr 函数","只有声明——任何定义都不能进头文件"],ci:0,kp:"kp_tmdef",
@@ -1692,6 +1703,7 @@ const CH8_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · 推导课三件套",
    lines:["① 一个模板参数只能推一个 T","② 两票冲突 → no matching function","③ 显式指定 tmax<double>(...) 是救援","④ typedef 不能带模板参数;别名模板用 using","⑤ 类型不是表达式:Type2Type<int>() 要括号","","独立练习:哪条不是正路"],
    d:"三件套收拢。第①②③条就是考核 q3 的完整答案链;第④⑤条是题库两个独立考点。独立练习换个角度:给你三条路,认出哪条根本不通。"},
+  {k:"repair",id:"C08-3",stage:"independent",cap:"实战 · using 别名模板",q:"C++ 没有 template typedef。用 using 别名模板实现同样效果。",help:"typedef 带不了模板参数;using 别名模板是正解(C++11 起)。"},
   {k:"variant",
    q:"独立练习:tmax(1, 2.0) 想编译通过,下面哪条【不是】正路?",
    opts:["显式指定:tmax<double>(1, 2.0)","把模板改成两个类型参数 <typename T,typename U>","靠编译器自动挑更宽的 double——什么都不用改"],ci:2,kp:"kp_tmdd",
@@ -1863,6 +1875,7 @@ const CH9_LESSONS=[
    lines:["① 圆括号 (count, value),花括号逐个列","② size 数元素,capacity 数仓库,sizeof 与元素个数无关","③ end 是尾后哨兵;at 带检查,[] 不检查","④ reserve 只备仓不造货","⑤ emplace_back 就地构造,push_back 先造临时再搬","","独立练习:emplace_back 差在哪","带做:fill/fill_n 用 sizeof/sizeof 数元素(fill.cpp,第六章欠账)","带做:二维数组行优先遍历对 cache 更友好(概念板书,无固定输出)"],
    d:"五条收拢:第①条就是考核 q1 的钥匙;带做的两句是第四、六章的欠账,本章一并还上——fill/fill_n 已经实跑(9 9 9 9 9),二维数组的行列遍历与 cache 是概念板书:行优先顺着内存走、列优先隔行跳,后者更伤缓存,但没有固定输出可考。独立练习把 emplace_back 的账算清。",
    help:"带走一句话:圆括号先数后值;end 是止步线;at 会喊,[] 不会。"},
+  {k:"repair",id:"C09-1",stage:"independent",cap:"实战 · 先 reserve",q:"知道要装 1000 个元素。逐个 push_back 会反复搬家。先预留容量。",help:"reserve 只扩容量不动 size——一次给够,搬家只此一次。"},
   {k:"variant",
    q:"独立练习:push_back(std::string(6, 'a')) 与 emplace_back(6, 'a') 的差别是什么?",
    code:["std::vector<std::string> v;","v.push_back(std::string(6, 'a'));","v.emplace_back(6, 'a');"],
@@ -1957,6 +1970,7 @@ const CH9_LESSONS=[
    lines:["① map/set 按 key 升序存放,遍历与插入顺序无关","② unordered_map / unordered_set 才是无序的","③ 定位与动手分开数:list 插 O(1) 定位 O(n),map/set O(log n)","④ 有序链表「定位并插入」= 0 个纯 O(1)","⑤ key 只读;自定义类型的入场券是 operator<","","独立练习:自定义类型当 key 的入场券"],
    d:"五条收拢:第①条是考核 q2,第③④条是考核 q4 的两半——先分开数,再合起来算「0 个」。第⑤条是题群规范行:set 元素与 map key 只读,operator< 是入场券。独立练习把入场券写成一行代码。",
    help:"带走一句话:key 是老大;两笔账分开数;operator< 是门票。"},
+  {k:"repair",id:"C09-2",stage:"independent",cap:"实战 · insert 不覆盖",q:"map 已有键 k,想「有则不动,无则插入」。operator[] 会覆盖旧值。改用 insert。",help:"operator[] 无条件赋值;insert 遇到已有键直接放弃,旧值保留。"},
   {k:"variant",
    q:"独立练习:想让 struct Gear { string id; int weight; }; 能当 map 的 key,最少补什么?",
    opts:["成员函数 bool operator<(const Gear& o) const,按你选定的字段比大小","operator== 就够了——判重是 map 的刚需","什么都不用——map 会按字节比较"],ci:0,kp:"kp_stlord",
@@ -2055,6 +2069,7 @@ const CH9_LESSONS=[
    lines:["① erase 返回下一个有效位置:it = c.erase(it),删除分支不再 ++","② 失效表:map insert 不失效;list 只死被删的;vector push_back 可能失效;deque insert 全失效","③ [] 存在就覆盖、不存在先造 0;insert/emplace 只插不覆盖","④ reserve(capacity()+1) 必然重新分配,旧引用全废——再用是 UB","⑤ 只读查询用 find/count,别用 []","","独立练习:把考核 BOSS 亲手复盘一遍"],
    d:"五条收拢:第①条是考核 q3,第②条是失效表题群,第④条就是考核 BOSS 的口径。独立练习把 BOSS 的代码亲手走一遍,想清楚「为什么不能保证输出」。",
    help:"带走一句话:erase 的返回值是入场券;失效看容器脾气;[] 会顺手造货。"},
+  {k:"repair",id:"C09-3",stage:"independent",cap:"实战 · erase 保命惯用法",q:"边遍历边删除:erase 之后旧迭代器已失效,++ 它是 UB。接住返回值。",help:"erase 返回下一个有效迭代器——删除分支接住它,没删才 ++。"},
   {k:"variant",
    q:"独立练习:vector<int> v{1}; int& r = v[0]; v.reserve(v.capacity() + 1); r = 99; cout << v[0];  能保证输出吗?",
    opts:["不能——reserve 超容量必然重新分配,r 已悬垂,是未定义行为","能——输出 99,reserve 保证元素跟着搬","能——输出 1,旧引用指向旧内存"],ci:0,kp:"kp_stlmis",
@@ -2257,6 +2272,7 @@ const CH10_LESSONS=[
    lines:["① 不捕获就往外摸 → 编译错误","② [=] / 点名不带 & :创建那一刻的快照","③ [&] / 点名带 & :始终读写原变量","④ 混合捕获逐个对号:带 & 引用,不带拷贝","⑤ 默认档(开头 = / &)管没点名的","","独立练习:想让 f() 实时,改哪个字?","带做:四连捕获逐个对号(mix4.cpp,题库原题型)"],
    d:"五条收拢:第②③条是考核 q1 的钥匙,第④条是考核 q4,也是题库四连题的口诀。独立练习把「想实时」落在最小改动上——一个字符的事。",
    help:"带走一句话:值捕获是创建那一刻的照片;引用捕获是实时监控;对号只看名字前有没有 &。"},
+  {k:"repair",id:"C10-1",stage:"independent",cap:"实战 · 引用捕获改遥控",q:"f() 要返回最新的 n。按值捕获定格在创建那一刻。改成引用捕获。",help:"[=] 是创建那一刻的快照;[&] 始终读原变量。"},
   {k:"variant",
    q:"独立练习:int n=1; auto f=[=]{return n;}; n=3;  想让 f() 返回 3,最小改动是什么?",
    opts:["捕获列表 [=] 改成 [&]——引用捕获,始终读原变量","把 n=3 挪到 lambda 定义之前——快照拍下的就是 3","调用 f() 之前再赋一次 n=3——快照会自动追上"],ci:0,kp:"kp_lacap",
@@ -2345,6 +2361,7 @@ const CH10_LESSONS=[
    lines:["① 按值副本默认 const;mutable 解锁的是副本","② static 不被捕获,函数体直接用原体","③ [a = a] 新建变量,初值取创建时的值","④ [&b = a] 新名字绑到原变量,读写实时","⑤ [sum = a + b] 初值可以是表达式","","独立练习:去掉 mutable,哪个 ++ 编译失败?","带做:init-capture 两副面孔(initcap/refinit 实跑)"],
    d:"五条收拢:第①②条就是考核 q2 的两半;第③④条是题库 init-capture 题的答案;第⑤条是加分项。独立练习把 mutable 的作用域再收紧一次。",
    help:"带走一句话:mutable 解锁副本,static 不捕获,init-capture 是新建——三个动作,三个落点。"},
+  {k:"repair",id:"C10-2",stage:"independent",cap:"实战 · static 不捕获",q:"lambda 里 ++st(st 是 static)。有人画蛇添足写成捕获 [st]。修正捕获列表。",help:"static 不进捕获列表——函数体直接用原体,连 mutable 都不需要。"},
   {k:"variant",
    q:"独立练习:把 [=]() mutable { ++loc; ++st; } 里的 mutable 去掉,会发生什么?",
    opts:["++loc 编译失败——副本是 const,没有 mutable 不许改;++st 不受影响","两个 ++ 都失败——static 也要 mutable 才能改","都不失败——[=] 捕获来的本来就可改"],ci:0,kp:"kp_lamut",
@@ -2413,6 +2430,7 @@ const CH10_LESSONS=[
    lines:["① [&] 存的是地址:原变量死了,遥控器指向空房","② 返回 lambda 前,检查每个引用捕获的寿命","③ 保命三式:按值捕获 / 长寿引用 / init-capture 搬家","④ GCC 放行零警告——生命周期是纪律不是承诺","","独立练习:全局变量算长寿引用吗?","带做:悬垂版与保命版对照(retref/safe,一字之差)"],
    d:"四条收拢:第②条是考核 q3 的判定动作,第④条是本课最容易被低估的知识点——工具不报警,不等于安全。独立练习把「长寿引用」推到极端情形。",
    help:"带走一句话:悬垂 = 引用先死;保命 = 按值、长寿或搬家;编译器不提醒。"},
+  {k:"repair",id:"C10-3",stage:"independent",cap:"实战 · 按值捕获防悬垂",q:"g 返回引用捕获局部的 lambda——悬垂 UB。改按值捕获。",help:"形参 x 的栈帧随返回销毁;按值捕获把拷贝装进闭包对象,走哪带哪。"},
   {k:"variant",
    q:"独立练习:g2() 返回 [&]{ return g; };  g 是文件顶层的全局变量。这个 lambda 安全吗?",
    opts:["安全——全局变量活到程序结束;而且它根本没被捕获,函数体直接用原体","危险——所有返回的 [&] 捕获都悬垂","编译错误——全局变量不能在 lambda 里使用"],ci:0,kp:"kp_ladang",
@@ -2599,6 +2617,7 @@ const CH11_LESSONS=[
    lines:["① 裸 new/delete:释放挂在人的记性上,岔路必漏","② RAII:资源进对象,构造获取析构释放,任何出口都触发","③ 所有权唯一:同一资源两个主人 = 双重释放","④ 类管资源就管拷贝(ch06 三之法则)","⑤ 类内 operator new/delete = 类的分配钩子","","独立练习:把 leak.cpp 改成 RAII 版,最小改动几行?","带做:doublefree 崩溃现场(运行期检测,语言只保证 UB)"],
    d:"五条收拢:第②条是后面三节课的地基——智能指针是「析构里写好释放」的现成类;第④条接回第六章。独立练习把判断落成改动:delete 那行删掉,Res* 换 make_unique,一共两行——这正是 RAII 的卖点:更少的代码,更严的保证。",
    help:"带走一句话:别问「delete 写哪了」,问「资源挂在哪个对象上」——挂对了,语言替你收。"},
+  {k:"repair",id:"C11-1",stage:"independent",cap:"实战 · 裸 new 换 RAII",q:"裸 new 配 delete,岔路必漏。改成 make_unique,删掉手动释放。",help:"RAII:构造获取析构释放——释放从代码行挪到作用域。"},
   {k:"variant",
    q:"独立练习:leak.cpp 的 work 里资源是裸 new——改成 RAII 版,最小改动是?",
    opts:["Res* p=new Res(); 换成 auto p=make_unique<Res>();,再删掉 delete 那行——资源进对象","在 early return 之前补一行 delete p;——把岔路也堵上","把 delete p; 挪到函数第一行——先释放再使用"],ci:0,kp:"kp_raii",
@@ -2708,6 +2727,7 @@ const CH11_LESSONS=[
    lines:["① unique_ptr:不可拷贝 + 不从裸指针隐式构造(q1)","② shared_ptr:复制增一,赋值先减旧再增新(BOSS)","③ 移后 unique_ptr:空但有效,可判空/reset,只禁解引用(q2)","④ 循环引用:计数互相顶住 → 泄漏;weak 破环(不计数)","","独立练习:BOSS 变式——把 c=move(b) 换成 c=a,","  最终 use_count 几?(自己数,再上机验)","带做:weak_ptr.lock() 摸对象"],
    d:"四条收拢:第①③条对应考核 q1、q2,第②条是 BOSS,第④条是题库循环引用题群的钥匙。独立练习把 BOSS 改了一个字:c=a(复制)替换 c=move(b)(移交)——计数路径全变,自己推完上机验:答案 3,因为 c=move(b) 那步本来就不动总数,换成复制后每步都在增。",
    help:"带走一句话:unique 数「不」(不可拷贝、不可隐式构造),shared 数「人头」(减旧增新),weak 数「零」。"},
+  {k:"repair",id:"C11-2",stage:"independent",cap:"实战 · 拷贝换 move",q:"unique_ptr 禁拷贝,这行编不过。想移交所有权,用 std::move。",help:"独占指针不可拷贝;移交用 move——源指针变空但有效。"},
   {k:"variant",
    q:"独立练习:把 count.cpp 里的 auto c=std::move(b); 换成 auto c=a;,最终 a.use_count() 是?",
    opts:["3——c=a 是复制,又一位主人入场;b 也还指着","2——move 变复制,一增一减抵消","4——a、b、c 加上最后 b=a,四个人头"],ci:0,kp:"kp_smart",
@@ -2829,6 +2849,7 @@ const CH11_LESSONS=[
    lines:["① std::move 只盖章(类型转换),搬运靠移动构造","② 有名字 = 左值:named 的 r 拷贝,q3 的钥匙","③ 省略:prvalue 初始化(语言保证)与 NRVO","④ return coll; 别写 move(GCC:prevents copy elision)","⑤ 临时值=右值 → 优先 && 重载;move 收益看成员深处","","独立练习:把 named.cpp 改到打 MOVE,最小改动?","带做:fwd.cpp 的 forward 已结清 ch08 欠账"],
    d:"五条收拢:第②条是考核 q3 与全章最高误区,第③④条是考核 q4,第⑤条是题库重载决议与 move 收益题群。独立练习的答案就在第②条里:删掉中间变量,t{std::move(s)} 一行直通——或者保留 r,写 t{std::move(r)} 重新盖章,两种都行。",
    help:"带走一句话:盖章(move/forward)是纸面工作,落点(移动/拷贝/省略)由「有没有名字」和「编译器敢不敢省」决定。"},
+  {k:"repair",id:"C11-3",stage:"independent",cap:"实战 · 再盖一次章",q:"r 是命名的右值引用变量,本身是左值。想真移动,在使用处再盖一次章。",help:"有名字 = 左值;std::move(r) 把章重新盖到这个表达式上。"},
   {k:"variant",
    q:"独立练习:named.cpp 想让 t{r} 打出 MOVE,最小改动是?",
    opts:["构造时重新盖章:Tracer t{std::move(r)};——变量 r 被转成右值表达式","把 r 的类型改掉:Tracer r = std::move(s);——右值直接装进对象","给 Tracer 补一个 Tracer(Tracer&) 构造重载"],ci:0,kp:"kp_move",
@@ -3038,6 +3059,7 @@ const CH12_LESSONS=[
    lines:["① 创建即启动,join / detach 二选一","② 析构仍 joinable → terminate(死罪)","③ 不可拷贝、可移动:move 转移执行权","④ 重复 join / detach 后 join → system_error(轻罪)","⑤ 保命写法:if (t.joinable()) t.join();","","独立练习:把 termdetach.cpp 改到不 terminate,","  最小改动一行什么?","带做:下一课——两个线程一起 ++ 会怎样"],
    d:"五条收拢:第②③条对应考核 q3,第①⑤条是工程习惯。独立练习的答案就一行:main 结束前补 t.join()——等它睡完那 200 毫秒,析构时 joinable 已假,terminate 解除。",
    help:"带走一句话:thread 是执行流的 unique_ptr——禁拷贝、可 move、作废前必须显式处置。"},
+  {k:"repair",id:"C12-1",stage:"independent",cap:"实战 · 补上 join",q:"线程对象出作用域时还 joinable 就是 terminate。结束前补 join。",help:"join / detach 二选一;析构仍 joinable = terminate。"},
   {k:"variant",
    q:"独立练习:termdetach.cpp 想不 terminate,最小改动是?",
    opts:["main 返回前补一行 t.join();——等它睡完再出作用域","把 t 换成全局变量——析构就不检查了","给 t 补一行 t.detach()——放飞它"],ci:0,kp:"kp_thread",
@@ -3153,6 +3175,7 @@ const CH12_LESSONS=[
    lines:["① 无同步的并发读写 = 数据竞争 = UB(不限结果范围)","② volatile 只禁缓存优化——不是同步原语(q2)","③ atomic / mutex → 恒 20000(语言/同步保证,BOSS)","④ CAS weak:伪失败多转圈,结果不变","⑤ bool 竞争照旧 UB;信号名单 ≠ 线程名单","","独立练习:把 atom20000.cpp 的 atomic<int> 换成","  volatile int,输出还能断言吗?","带做:下一课——用 mutex 保护真正的数据结构"],
    d:"五条收拢:第①③条对应考核 q1 与 BOSS,第②条是 q2。独立练习的答案:不能——volatile 版回到数据竞争,任何输出都不再有保证,这正是两把钥匙的分界。",
    help:"带走一句话:先判同步,再判原子——没有同步,连「概率」都谈不上。"},
+  {k:"repair",id:"C12-2",stage:"independent",cap:"实战 · volatile 换 atomic",q:"并发计数用 volatile 不算同步——数据竞争照旧。换成 atomic。",help:"volatile 只禁编译器缓存;原子性靠 atomic 或 mutex。"},
   {k:"variant",
    q:"独立练习:把 atom20000.cpp 的 atomic<int> 换成 volatile int,输出还能断言吗?",
    opts:["不能——回到数据竞争,任何输出都不再有保证,程序不应再执行","能——volatile 每次真读内存,结果仍恒 20000","能——多跑几次取中位数就行"],ci:0,kp:"kp_atomic",
@@ -3250,6 +3273,7 @@ const CH12_LESSONS=[
    lines:["① lock_guard = 锁的 RAII,作用域即临界区","② 锁保护访问:引用不递出,检查与操作一个临界区","③ 死锁:统一锁序 / std::lock / scoped_lock","④ unique_lock 更贵换能力,单作用域用 lock_guard(q4)","⑤ cv 必配谓词循环;读多写少用 shared_mutex","","独立练习:把 front() 返回引用改成返回拷贝,","  竞态解了吗?还差什么?","带做:下一课——不想自己管线程怎么办"],
    d:"五条收拢:第②条是 DataList 题群的钥匙,第④条是考核 q4,第⑤条接条件变量题群。独立练习:返回拷贝堵住了「引用逃逸」这一个洞——但 empty 检查与操作的分离还得靠把两步焊进同一临界区;一个洞一个补丁,竞态从来不是一行修好的。",
    help:"带走一句话:锁的门禁只到临界区门口——值递出去,地址别递出去。"},
+  {k:"repair",id:"C12-3",stage:"independent",cap:"实战 · 检查焊进临界区",q:"empty 查一次、取再锁一次——中间有空档。把检查焊进同一临界区。",help:"empty 的结论出锁就过期——检查与操作必须一个临界区。"},
   {k:"variant",
    q:"独立练习:DataList 的 front() 改成返回拷贝,竞态解了吗?",
    opts:["堵住了引用逃逸这一个洞——empty 检查与操作的分离还得焊进同一临界区","解了——返回拷贝就万无一失","解不了——这函数天生不安全"],ci:0,kp:"kp_lock",
@@ -3454,6 +3478,7 @@ const CH13_LESSONS=[
    lines:["① 断点:文件:行号 / 函数名;可执行名不行(q1)","② 条件断点:b f if x==3(BOSS,真机只停 x==3)","③ 栈:bt 全图 / bt 3 外三层 / frame n 跳帧","④ 打印:p/x 值、x/16xb 逐字节内存","⑤ watch 盯变化:Old value → New value","","独立练习:想盯 arr[i] 里谁被改,用哪类停法?","带做:下一课——程序已经跑起来了,怎么挤进去看"],
    d:"五条收拢:第①②条是考核 q1 与 BOSS,第③④条对应题库 bt/x 命令群,第⑤条是 watch 分界。独立练习的答案:用观察点——watch arr[i](配合定位 i),值一变 gdb 就停并报 Old/New;断点只能按行停,盯不出「谁改的」。下一课处理另一个现场:程序正在运行中,attach 挤进去。",
    help:"带走一句话:断点问「停在哪」,watch 问「谁动了它」——定位与监视,两套兵器。"},
+  {k:"repair",id:"C13-1",stage:"independent",cap:"实战 · 条件断点",q:"想在 f 入口仅当 x==3 时停下。位置后面跟 if 条件。",help:"数字跟在位置后会被当成名字的一部分;条件断点是位置 + if 条件。"},
   {k:"variant",
    q:"独立练习:怀疑数组元素被某处代码偷偷改掉,想抓「谁改的」,用哪类停法?",
    opts:["观察点 watch arr[i]——值一变就停,报 Old/New value","断点 b main.cpp:30——单步盯着跑","两个断点夹住这段循环"],ci:0,kp:"kp_gdb",
@@ -3548,6 +3573,7 @@ const CH13_LESSONS=[
    lines:["① attach:gdb -p PID(Shell)/ attach PID(GDB 内)","② 多线程:info threads 点名,thread n 上台","③ 死锁四步:bt → 锁 → 等待链 → 代码","④ coredump:寄存器/栈/内存在,源代码不在(q4)","⑤ 搭档:ulimit -c unlimited 配 -g 编译","","独立练习:core 里栈全是地址没有函数名,","  缺了什么?","带做:下一课——测试框架的两条断言线"],
    d:"五条收拢:第①条是考核 q2,第④⑤条是考核 q4,第③条接第十二章死锁。独立练习的答案:-g 没带——core 里的地址没有符号映射;补法不是补 core,是重新用 -g 编译,再拿新程序读旧 core。",
    help:"带走一句话:attach 挤活人,core 验死人——两条路都要求程序带着 -g 出生。"},
+  {k:"repair",id:"C13-2",stage:"independent",cap:"实战 · 打开 core 转储",q:"崩溃没生成 core——转储上限是 0。Shell 里打开它。",help:"core 要靠 Shell 的 ulimit 先开闸;配上 -g 编译才能还原行号。"},
   {k:"variant",
    q:"独立练习:打开 core 文件,栈里全是裸地址、没有函数名——缺了什么?",
    opts:["编译时没带 -g——core 只有现场,图纸(符号)得程序自己带","core 文件生成不完整——重新崩溃一次","gdb 版本太旧——升级 gdb"],ci:0,kp:"kp_gdbs",
@@ -3646,6 +3672,7 @@ const CH13_LESSONS=[
    lines:["① ASSERT 断头 / EXPECT 记录(q3,背反重灾区)","② 中止粒度:当前用例函数,不是整个程序","③ SetUp/TearDown 每个用例一次(Q411)","④ 参数化:几个值几个用例(Q414)","⑤ 断言禁副作用;ASan 真机揭发内存错误","","独立练习:先判空再解引用的测试,判空用哪条?","带做:终课——构建流水线与 CMake"],
    d:"五条收拢:第①条是考核 q3,第②③④条是题库 fixture/参数化题群,第⑤条接回第三章。独立练习的答案:ASSERT——判空失败后解引用不能再跑,必须断头。",
    help:"带走一句话:断头线护安全,记录线收全图——选线只看「失败后还走不走」。"},
+  {k:"repair",id:"C13-3",stage:"independent",cap:"实战 · 判空用断头线",q:"判空失败后解引用还在跑。判空必须断头——换 ASSERT。",help:"后续代码依赖这次检查结果时用 ASSERT——失败立刻退出当前用例函数。"},
   {k:"variant",
    q:"独立练习:测试先判空指针再解引用,判空那条断言该用哪条线?",
    opts:["ASSERT_NE(p, nullptr)——判空失败后解引用绝不能再跑","EXPECT_NE(p, nullptr)——记录下来继续跑就行","两条都行——反正都会报失败"],ci:0,kp:"kp_gtest",
@@ -3805,6 +3832,7 @@ const CH3_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · 两件事分开记",
    lines:["① 每个表达式交一个值——后缀交旧，前缀交新","② 副作用一定发生——a++ 执行完 a 就是 a+1","③ 赋值与复合赋值的值 = 新值","④ 读代码时分开写：值是多少？变量变成什么？","","独立练习：n++ 与 ++n 连用的追踪"],
    d:"四条收拢。填表的时候你已经用过这套动作了——先算值、再落副作用，谁都不漏。独立练习换一组语句，看看你能不能直接迁移。"},
+  {k:"repair",id:"C03-1",stage:"independent",cap:"实战 · 前缀自增",q:"第一行 a++ 是对的;第二行要「先加再用新值」,却交出旧值。改成前缀。",help:"后缀交旧值再加;前缀先加再交新值。"},
   {k:"variant",
    q:"独立练习：int n = 4, s = 0; 执行 s = n++ * 2; s += ++n; 之后 n 和 s 各是多少？",
    code:["int n = 4, s = 0;","s = n++ * 2;   // 第一行","s += ++n;      // 第二行"],
@@ -3857,6 +3885,7 @@ const CH3_LESSONS=[
    lines:["① 查表：== 高于 & |；+ 高于 <<；赋值垫底","② 同级看结合性：关系/算术左结合","③ 拿不准 → 加括号，括号永远合法","","独立练习：复合赋值右侧的分组"],
    d:"三步收拢：查表、看结合性、加括号。你已经在这节课里复原了两个陷阱的分组——独立练习再换一个复合赋值的场景。",
    },
+  {k:"repair",id:"C03-2",stage:"independent",cap:"实战 · 优先级补括号",q:"想判断「x 是偶数」。== 的优先级高于 &,现在算的是 x & (1==0)。补括号。",help:"== 高于 &——想先做位与,把 (x & 1) 括起来。"},
   {k:"variant",
    q:"独立练习：int i = 3; 执行 i <<= 2 + 1; 之后 i 是多少？",
    code:["int i = 3;","i <<= 2 + 1;   // 复合赋值","// i 的最终值是？"],
@@ -3907,6 +3936,7 @@ const CH3_LESSONS=[
   {k:"board",stage:"recap",cap:"课末回顾 · 短路三句",
    lines:["① 左边一定先完整求值（副作用发生）","② 左边能定结果 → 右边整个不执行","③ 工程价值：守卫惯用法，先判空再解引用","","下一课预告：这条“左先右后”的顺序","只是求值顺序三档表里的一行","","独立练习：两次自增被 && 分隔"],
    d:"三句收拢，注意预告：&& 提供的顺序在标准里叫“左侧先于右侧求值”——它马上会成为下一课“顺序三档”里的正面教材。独立练习里有一个两次自增的题目，正好为它埋伏笔。"},
+  {k:"repair",id:"C03-3",stage:"independent",cap:"实战 · 短路守卫",q:"p 可能为空。|| 两边都会解引用,空指针先崩。改成 && 守卫:判空在前。",help:"&& 左边先判空,右边才轮得到解引用。"},
   {k:"variant",
    q:"独立练习：int i = 0; bool r = i++ && i++; 执行后 r 和 i 各是多少？",
    code:["int i = 0;","bool r = i++ && i++;","// r 和 i 的最终值是？"],
@@ -4019,6 +4049,7 @@ const CH4_LESSONS=[
    lines:["① 圈出标识符","② 右左交替：[ → 数组，( → 函数，* → 指针","③ 括号优先：先括号内，再括号外","","typedef 照同一套读法","","独立练习：函数指针数组"],
    d:"三步收拢。这节课你拆了五个声明，包括右左法则的极限测试——函数返回数组指针。独立练习来一个工程里真实存在的结构：函数指针数组。",
    help:"读声明的肌肉记忆靠「圈标识符」养成。后面两节课的指针算术、字符串，都默认你能一眼读出 char* 和 char(*)[N] 的区别。"},
+  {k:"repair",id:"C04-1",stage:"independent",cap:"实战 · 一行一个指针",q:"这行只声明出一个指针,q 是普通 int。拆成两行,让两个都是指针。",help:"* 只贴着它旁边的名字——int* a, b 的 b 是普通 int。"},
   {k:"variant",
    q:"独立练习：int (*p[10])(int*); 里 p 是什么？",
    opts:["指向函数的指针","10 个函数指针组成的数组","返回 int* 的函数","10 个 int 组成的数组"],ci:1,kp:"kp_decl",
@@ -4070,6 +4101,7 @@ const CH4_LESSONS=[
    lines:["① 字面量自带结尾 \\0（逐字符列表不带）","② sizeof 数箱子（含全部 \\0）","③ strlen / cout 数到第一个 \\0","④ 指针算术单位 = 元素","⑤ 二维数组按行一维铺开","","独立练习：二维数组的 sizeof"],
    d:"五条收拢。注意第 ⑤ 条：二维数组在内存是一维的、按行连续铺开——这就是数组指针能整行整行走的原因（上一课的 rows[1]）。独立练习算一个真实的二维 sizeof。",
    help:"这五条是字符串题和数组题的公共底盘。做题时先问 \\0（③），再问单位（④），二维的再问排布（⑤）。"},
+  {k:"repair",id:"C04-2",stage:"independent",cap:"实战 · sizeof 量箱子",q:"buf 想装下 \"abcd\" 连同结尾 \\0。4 只装 4 个字符。用 sizeof 量字面量。",help:"字面量自带结尾 \\0:\"abcd\" 占 5 字节;strlen 数到 \\0 是 4,不含它。"},
   {k:"variant",
    q:"独立练习：double alpha[3][4]; sizeof(alpha) 与 sizeof(alpha[0]) 各是多少？",
    code:["double alpha[3][4];","// sizeof(alpha) = ?","// sizeof(alpha[0]) = ?"],
@@ -4121,6 +4153,7 @@ const CH4_LESSONS=[
    lines:["++ 贴着谁，就改谁","","*px++   → 移指针（读旧位）","(*px)++ → 改元素（y 拿旧值）","*++px   → 先走，读新位","","表达式里的 px+1 不移动 px","","独立练习：乘法与后置 ++ 同行"],
    d:"一句口诀收拢全课。独立练习把第三章的乘法旧值规则和本课的移指针合在同一行——正好检验你能不能两件事同时记牢。",
    help:"到这一步，指针题的动作链已经齐了：读声明（DL）→ 数 \\0（NA）→ 判贴身（PD）。下一课补最后一块：对象活着吗。"},
+  {k:"repair",id:"C04-3",stage:"independent",cap:"实战 · 指针加法单位",q:"想跳过 3 个 int。指针加法的单位是元素不是字节,这行却乘了 sizeof。直接写 p+3。",help:"指针 +1 的单位是它指向的类型——int* 加 1 跳一个 int。"},
   {k:"variant",
    q:"独立练习：int arr[3] = {10, 20, 30}; int* px = arr; 执行 int y = *px++ * 2; 之后 y、px 各是什么？",
    code:["int arr[3] = {10, 20, 30};","int* px = arr;","int y = *px++ * 2;"],
@@ -4238,6 +4271,7 @@ const CH6_LESSONS=[
    lines:["① 图纸不落地,声明才构造","② 栈对象随作用域回收,结尾逆序","③ 堆对象死在 delete,没有 delete 就不死","","④ 引用和指针不构造对象","","独立练习:Rho 的两版输出"],
    d:"三句加一个陷阱收拢。独立练习把第 ③ 句做成对照实验:同一个类,差一个 delete,析构次数不一样——你算算各输出什么。",
    help:"下一课讲对象生下来怎么初始化——列表、声明顺序与 explicit,初始化错法是本章第二大坑。"},
+  {k:"repair",id:"C06-1",stage:"independent",cap:"实战 · const 成员初始化",q:"Widget 有 const 成员,构造函数体里赋值编不过。写成员初始化列表。",help:"const 成员不能赋值,只能在初始化列表里出生。"},
   {k:"variant",
    q:"独立练习:Rho 类构造打 1、拷贝打 1、析构打 3。两个 main 各输出什么?",
    code:["Rho r1;","Rho* p = new Rho(r1);","delete p;        // 版本 A:有这行","                 // 版本 B:没有这行","printf(\"|\");     // 结尾都打一根竖线"],
@@ -4289,6 +4323,7 @@ const CH6_LESSONS=[
    lines:["① 列表是初始化,函数体是赋值","   const/引用成员只能在列表出生","② 执行顺序 = 声明顺序(基类最先)","   书写顺序不算——-Wreorder 在盯着","③ explicit 只挡单参隐式转换","","独立练习:const 成员的出生地"],
    d:"三条规矩收拢。独立练习回到第 ① 条的硬证据:把 const 成员的初始化写进函数体,编译器当场拒绝——亲手看一次这个错误。",
    help:"下一课拷贝控制:对象出生之后被拷贝时发生什么——默认拷贝是这章最疼的坑。"},
+  {k:"repair",id:"C06-2",stage:"independent",cap:"实战 · explicit 拦转换",q:"int 到 Length 的隐式转换太宽松。给单参构造加 explicit。",help:"explicit 拦下拷贝初始化的隐式转换;直接初始化照常可用。"},
   {k:"variant",
    q:"独立练习:struct K { const int id; K(){ id = 7; } };  这段代码?",
    code:["struct K {","    const int id;","    K(){ id = 7; }   // 想在函数体里给 const 成员值","};"],
@@ -4340,6 +4375,7 @@ const CH6_LESSONS=[
    lines:["这个类在管资源吗?","","不管资源 → 默认拷贝就是对的","管资源   → 三件套(析构/拷贝构造/拷贝赋值)","要独占   → =delete 拷贝两件","","默认拷贝 = 逐成员照抄","","独立练习:Student 的双重释放"],
    d:"判定词收拢。独立练习是题库原题的同型:Student 类自己 new 了一块 name,没写拷贝构造——两个对象会怎样?你已经看过 shallow 的结局了。",
    help:"下一课 static 成员:不属于任何单个对象的一份存储——定义位置、四种访问、无 this,都是死规矩。"},
+  {k:"repair",id:"C06-3",stage:"independent",cap:"实战 · 深拷贝构造",q:"类管着 new 出来的资源,默认拷贝是浅拷贝,析构双删。补上深拷贝构造。",help:"浅拷贝复制的是指针本身;深拷贝要 new 一份新的,再把值抄过来。"},
   {k:"variant",
    q:"独立练习:struct Student { char* name; ~Student(){ delete[] name; } };  main 里 Student s1; s2 = s1; 结尾会发生什么?",
    code:["struct Student {","    char* name;","    ~Student(){ delete[] name; }","};","int main(){","    Student s1;","    Student s2 = s1;   // 默认拷贝","}"],
@@ -4454,6 +4490,7 @@ const CH5_LESSONS=[
    lines:["① 抄宏定义","② 展开文本(参数出现几次抄几次)","③ 按 C++ 优先级算","","陷阱:参数不括 · 多层宏 · 尾部带分号","","独立练习:# 字符串化,单层不展开"],
    d:"三步收拢。独立练习是 # 运算符:# 把参数变成字面串,而且单层【不展开】——STR(FIVE) 打的是 FIVE 这个名字,不是 5。想先展开,包一层。",
    help:"下一课讲宏最危险的一面:参数出现两次,副作用翻倍——以及它和未定义行为的交界。"},
+  {k:"repair",id:"C05-1",stage:"independent",cap:"实战 · 宏参数加括号",q:"宏参数没括号,SQ(1+2) 展开成 1+2*1+2。给参数套上括号。",help:"宏是文本复印:参数出现几次就要括几层——外层一层也不能少。"},
   {k:"variant",
    q:"独立练习:#define STR(x) #x  #define XSTR(x) STR(x)  #define FIVE 5   STR(FIVE) 与 XSTR(FIVE) 各输出什么?",
    code:["printf(\"[%s]\\n\", STR(FIVE));","printf(\"[%s]\\n\", XSTR(FIVE));","// 实跑结果见选项"],
@@ -4507,6 +4544,7 @@ const CH5_LESSONS=[
    lines:["① 宏 + 同参数两次 + ++ → UB(别算固定值)","② inline/constexpr 函数 → 实参求值一次","③ 各参数出现一次 → 没问题","","括号救优先级,救不了副作用","","独立练习:安全的平方该怎么写"],
    d:"三条线收拢。独立练习是道选择题:想要安全的平方,四个候选你挑哪个——这道题把规范推 constexpr 的理由考透。",
    help:"下一课条件编译:#ifdef 只看名字,#if 看值—— BOSS 题的 23 就从这里来。"},
+  {k:"repair",id:"C05-2",stage:"independent",cap:"实战 · #if 看值",q:"想「值为 1 时才编译」。#ifdef 只认名字不认值。换 #if。",help:"#ifdef 问「名字定义过吗」;#if 才求值——0 就是 0。"},
   {k:"variant",
    q:"独立练习:想要『平方』既没有副作用陷阱、又有类型检查,选哪个?",
    code:["A. #define SQ(x) (x*x)","B. #define SQ(x) ((x)*(x))","C. inline int sq(int x){ return x*x; }","D. 调用处手动把实参算好再传给宏"],
@@ -4559,6 +4597,7 @@ const CH5_LESSONS=[
    lines:["① #ifdef 查名字,值无关","② #if 求值,未定义宏当 0","③ 空宏进 #if 运算 → 预处理错误","④ #if defined(X) 是安全的查名字","","BOSS:#if A(0)→假 · #ifdef A→真 · 输出 23","","独立练习:#define TEST_2 9 之后"],
    d:"四条收拢,BOSS 拆给你看:A 定义成 0——#if A 求值 0 走假分支打 2,#ifdef A 只看名字打 3,输出 23。独立练习把 TEST_2 补上值,看 #if 的真分支怎么走。",
    help:"下一课是工程面:宏名规范、消参宏、constexpr 替代——规范为什么处处限宏。"},
+  {k:"repair",id:"C05-3",stage:"independent",cap:"实战 · 宏换 constexpr",q:"MAX 是宏:没类型、没作用域、实参求值两次。换成 constexpr 函数。",help:"constexpr 函数有类型、有作用域、可调试——实参只求值一次。"},
   {k:"variant",
    q:"独立练习:#define TEST_2 9 之后,#if (TEST_2) 走哪支、这一段程序打什么?",
    code:["#define TEST_2 9","#if (TEST_2)","    printf(\"%d\\n\", TEST_2);","#else","    printf(\"no\\n\");","#endif"],
@@ -4703,7 +4742,7 @@ const SCREENS=["scr-title","scr-enroll","scr-campus","scr-class","scr-exam","scr
 function showScreen(id){SCREENS.forEach(s=>{const el=$("#"+s);if(el)el.hidden=s!==id});scrollTo(0,0)}
 /* 状态条 */
 function passedCount(){let n=0;for(let i=0;i<LEVELS.length;i++)if(SAVE.done[LEVELS[i].id])n++;return n}
-function updateStatus(){const n=passedCount(),codes=Object.keys(SAVE.codeTasks||{}).length;$("#st-lv").textContent="LV "+(n+1);$("#st-xp").style.transform="scaleX("+Math.min(1,SAVE.xp/700)+")";$("#st-misc").textContent="XP "+SAVE.xp+" · 章节 "+n+"/13 · 代码实战 "+codes+"/13"}
+function updateStatus(){const n=passedCount(),codes=Object.keys(SAVE.codeTasks||{}).length;$("#st-lv").textContent="LV "+(n+1);$("#st-xp").style.transform="scaleX("+Math.min(1,SAVE.xp/700)+")";$("#st-misc").textContent="XP "+SAVE.xp+" · 章节 "+n+"/13 · 代码实战 "+codes+"/52"}
 function addXP(n){SAVE.xp+=n;save();updateStatus()}
 /* 误区档案 */
 function noteMiscon(think,found,check,src){SAVE.miscon.unshift({think:think.slice(0,80),found:found,check:check,src:src||null,t:Date.now()});if(SAVE.miscon.length>40)SAVE.miscon.length=40;save()}
@@ -4874,8 +4913,8 @@ function renderLessonHub(ci){
   });
   h+='<div class="panel" style="border-color:var(--gold-dk)"><div class="qnum">CHAPTER CHALLENGE · 直接过关</div>'+
   '<div style="font-weight:900;margin-bottom:7px">无需重做课时，直接测试本章</div>'+
-  '<div class="small dim">完成代码挑战，或五题独立考试答对 4 题，本章即通过并开放下一章。原课程进度和学习记录会保留。</div>'+
-  '<div class="lesson-tools"><button class="btn" id="bt-direct-challenge">直接做章节挑战 ▶</button><button class="btn ghost" id="bt-direct-exam">直接做五题测试 ▶</button></div>'+
+  '<div class="small dim">本章每小节各有一段代码实战（共 4 段），全部通过即解锁下一章；或直接做五题考核答对 4 题。四节互动课保留，可自由学习。</div>'+
+  '<div class="lesson-tools"><button class="btn" id="bt-direct-challenge">直接做本章实战 ▶</button><button class="btn ghost" id="bt-direct-exam">直接做五题测试 ▶</button></div>'+
   (SAVE.done[l.id]?'<div class="small" style="margin-top:8px;color:var(--green)">✓ 本章已经通过，可继续下一章。</div>':"")+'</div>';
   h+='<div class="panel"><div style="font-weight:900;margin-bottom:6px">掌握度(图书馆可看明细)</div><div class="mrow">'+group.map(ls=>{
     const m=SAVE.mastery[ls.kp]||0;
@@ -4892,45 +4931,72 @@ function renderLessonHub(ci){
   const ex=$("#bt-chexam");if(ex)ex.onclick=()=>{sfx("click");startExam(ci)};
 }
 
+function chapterKeys(ci){const c="C"+String(ci+1).padStart(2,"0");return [c+"-1",c+"-2",c+"-3",c]}
+function chapterTasksDone(ci){const ks=chapterKeys(ci);return ks.every(k=>SAVE.codeTasks&&SAVE.codeTasks[k])}
+function tryUnlockChapter(ci){
+ const lv=LEVELS[ci];if(SAVE.done[lv.id])return false;
+ if(!chapterTasksDone(ci))return false;
+ const ks=chapterKeys(ci),anyAssisted=ks.some(k=>SAVE.codeTasks[k]&&SAVE.codeTasks[k].assisted);
+ SAVE.done[lv.id]=anyAssisted?2:3;
+ SAVE.chapterChallenges=SAVE.chapterChallenges||{};
+ SAVE.chapterChallenges[lv.id]={assisted:anyAssisted,completedAt:Date.now()};
+ save();addXP(20);
+ return true;
+}
 function openChapterChallenge(ci){
- const id="C"+String(ci+1).padStart(2,"0"),t=PRACTICE_TASKS[id];
+ const ks=chapterKeys(ci);
  showScreen("scr-class");
+ let blocks="",doneCount=0;
+ ks.forEach((k,idx)=>{
+  const t=PRACTICE_TASKS[k],done=!!(SAVE.codeTasks&&SAVE.codeTasks[k]);
+  if(done)doneCount++;
+  const lessonTitle=(CH_LESSONS[ci][idx]||{}).title||"";
+  blocks+='<div class="panel"'+(done?' style="border-color:#2c7c4a"':'')+'><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><div class="qnum">实战 '+(idx+1)+' / 4 · '+ESC(lessonTitle)+'</div>'+(done?'<span class="mchip s3">✓ 已通过</span>':'')+'</div>'+
+  '<div style="font-weight:900;margin-bottom:6px">'+ESC(t.name)+'</div><div class="qstem">'+ESC(t.q)+'</div>'+
+  '<div class="repair-code"><pre>'+hl(t.before)+'</pre></div>'+
+  (done
+   ? '<div class="repair-code"><pre>'+hl(t.after+"\n\n"+t.explain)+'</pre></div>'
+   : '<textarea id="chapter-answer-'+k+'" class="repair-edit" spellcheck="false" aria-label="代码实战"></textarea>'+
+     '<div class="repair-code"><pre>'+hl(t.after)+'</pre></div>'+
+     '<div class="small dim">本关核对关键代码结构，不在浏览器编译 C++；其他等价实现可以本机使用 g++ 验证。</div>'+
+     '<div class="repair-feedback" id="challenge-feedback-'+k+'" aria-live="polite"></div>'+
+     '<div class="lesson-tools"><button class="btn" id="challenge-check-'+k+'">提交 ▶</button><button class="btn ghost small" id="challenge-tip-'+k+'">提示</button>'+
+     '<button class="btn ghost small" id="challenge-answer-'+k+'" hidden>参考答案</button></div>')+
+  '</div>';
+ });
  $("#scr-class").innerHTML='<div class="disp">CHAPTER '+(ci+1)+' · '+ESC(LEVELS[ci].name)+' / CODE CHALLENGE</div>'+
- '<div class="panel"><div class="qnum">章节挑战 · '+ESC(t.name)+'</div><div class="qstem">'+ESC(t.q)+'</div>'+
- '<div class="repair-code"><pre>'+hl(t.before)+'</pre></div><textarea id="chapter-answer" class="repair-edit" spellcheck="false" aria-label="章节挑战代码"></textarea>'+
- '<div class="repair-code"><pre>'+hl(t.after)+'</pre></div>'+
- '<div class="small dim">本关核对关键代码结构，不在浏览器编译 C++；其他等价实现可以本机使用 g++ 验证。</div>'+
- '<div class="repair-feedback" id="challenge-feedback" aria-live="polite"></div>'+
- '<div class="lesson-tools"><button class="btn" id="challenge-check">提交挑战 ▶</button><button class="btn ghost small" id="challenge-tip">提示</button>'+
- '<button class="btn ghost small" id="challenge-answer" hidden>参考答案</button><button class="btn ghost small" id="challenge-back">返回课时中心</button></div></div>';
- const input=$("#chapter-answer"),fb=$("#challenge-feedback"),check=$("#challenge-check"),tip=$("#challenge-tip"),ans=$("#challenge-answer");
- input.value=t.starter;let assisted=false,wrong=0;
- $("#challenge-back").onclick=()=>renderLessonHub(ci);
- tip.onclick=()=>{assisted=true;fb.innerHTML='<div class="review ng">'+ESC(t.tip)+'</div>'};
- ans.onclick=()=>{assisted=true;input.value=t.solution;ans.hidden=true;fb.innerHTML='<div class="review ng">参考答案已填入，请理解后提交。</div>'};
- check.onclick=()=>{
-  const text=input.value;
-  if(!validateRepair(id,text)){
+ '<div class="panel" style="border-color:var(--gold-dk)"><div class="qnum">CHAPTER CHALLENGE · 本章直通</div>'+
+ '<div style="font-weight:900">4 段小节代码实战，全部通过即解锁下一章</div>'+
+ '<div class="small dim" style="margin-top:6px">已完成 '+doneCount+' / 4。使用提示或参考答案会记为引导完成；也可以直接做五题考核。</div>'+
+ '<div class="lesson-tools"><button class="btn ghost" id="challenge-back">返回课时中心</button></div></div>'+blocks;
+ $("#challenge-back").onclick=()=>{sfx("click");renderLessonHub(ci)};
+ ks.forEach((k,idx)=>{
+  if(SAVE.codeTasks&&SAVE.codeTasks[k])return;
+  const t=PRACTICE_TASKS[k];
+  const input=$("#chapter-answer-"+k),fb=$("#challenge-feedback-"+k),check=$("#challenge-check-"+k),tip=$("#challenge-tip-"+k),ans=$("#challenge-answer-"+k);
+  input.value=t.starter;let wrong=0,assisted=false;
+  tip.onclick=()=>{assisted=true;fb.innerHTML='<div class="review ng">'+ESC(t.tip)+'</div>'};
+  ans.onclick=()=>{assisted=true;input.value=t.solution;ans.hidden=true;fb.innerHTML='<div class="review ng">参考答案已填入，请理解后提交。</div>'};
+  check.onclick=()=>{
+   const text=input.value;
+   if(!validateRepair(k,text)){
     wrong++;sfx("bad");if(wrong>=2)ans.hidden=false;
     fb.innerHTML='<div class="review ng">'+ESC(wrong>1?t.tip:"代码结构仍不符合要求。请先自己分析，或点提示。")+'</div>';return;
-  }
-  const lv=LEVELS[ci],previous=!!SAVE.done[lv.id];
-  SAVE.done[lv.id]=Math.max(SAVE.done[lv.id]||0,assisted?2:3);
-  SAVE.chapterChallenges=SAVE.chapterChallenges||{};
-  const old=SAVE.chapterChallenges[lv.id];
-  if(!old||(!assisted&&old.assisted))SAVE.chapterChallenges[lv.id]={code:text,assisted,completedAt:Date.now()};
-  SAVE.codeTasks=SAVE.codeTasks||{};
-  if(!SAVE.codeTasks[id])SAVE.codeTasks[id]={code:text,assisted};
-  save();if(!previous)addXP(20);sfx("win");
-  check.disabled=true;tip.disabled=true;ans.hidden=true;input.readOnly=true;
-  fb.innerHTML='<div class="review ok"><div class="rl">本章挑战通过，下一章已解锁</div>'+ESC(t.explain)+
-   (assisted?'<div class="small dim">本次使用提示，属于引导完成。</div>':'<div class="small dim">独立完成。</div>')+'</div>'+
-   '<div class="lesson-tools"><button class="btn" id="challenge-next">'+(ci===LEVELS.length-1?"查看毕业典礼 ▶":"下一章 ▶")+'</button>'+
-   '<button class="btn ghost" id="challenge-stay">回本章课时</button></div>';
-  $("#challenge-next").onclick=()=>{if(ci===LEVELS.length-1)renderCeremony();else renderLessonHub(ci+1)};
-  $("#challenge-stay").onclick=()=>renderLessonHub(ci);
-  updateStatus();
- };
+   }
+   sfx("win");
+   SAVE.codeTasks=SAVE.codeTasks||{};
+   if(!SAVE.codeTasks[k]){SAVE.codeTasks[k]={code:text,assisted};addXP(4)}
+   check.disabled=true;tip.disabled=true;ans.hidden=true;input.readOnly=true;
+   fb.innerHTML='<div class="review ok">'+ESC(t.explain)+'<div class="small dim">本小节通过。'+(assisted?'（使用了提示，引导完成）':'（独立完成）')+'</div></div>';
+   const unlocked=tryUnlockChapter(ci);
+   if(unlocked){
+    fb.innerHTML='<div class="review ok"><div class="rl">本章 4 段实战全部完成，下一章已解锁</div>'+ESC(t.explain)+'</div>'+
+     '<div class="lesson-tools"><button class="btn" id="challenge-next-'+k+'">'+(ci===LEVELS.length-1?"查看毕业典礼 ▶":"下一章 ▶")+'</button></div>';
+    $("#challenge-next-"+k).onclick=()=>{if(ci===LEVELS.length-1)renderCeremony();else renderLessonHub(ci+1)};
+   }
+   updateStatus();
+  };
+ });
 }
 
 /* ---- 互动章节：课时课堂（步骤机） ---- */
@@ -4965,7 +5031,7 @@ function resumeLesson(){
 }
 function stepStage(st){return st.stage||({board:"teach",scene:"example",op:"example",predict:"practice",probe:"practice",variant:"independent"})[st.k]}
 const STAGE_LABELS={intro:"课程导入",teach:"概念讲解",example:"示例演示",practice:"随堂练习",recap:"课堂回顾",independent:"独立练习"};
-const PRACTICE_TASKS={"C01":{"name":"修复头文件重复定义","q":"counter.h 同时被 main.cpp 与 worker.cpp 包含。请将原本重复的变量定义改为头文件中的 extern 声明和 counter.cpp 中的唯一定义，按这两个顺序填写。","before":"// counter.h（第一行）\n// counter.cpp（第二行）\n","starter":"int counter=0;\nint counter=0;","after":"\n// 头文件只放声明；源文件仅定义一次","solution":"extern int counter;\nint counter=0;","tip":"头文件 extern int counter;，源文件 int counter = 0;。","explain":"不同翻译单元都可看到同一声明，链接时只有 counter.cpp 的一份定义。"},"C02":{"name":"转换时机","q":"让 9 / 2 得到 4.5，而不是 4。你必须在除法之前做类型转换。","before":"int a=9,b=2;\ndouble result =","starter":"static_cast<double>(a / b)","after":";\nstd::cout<<result; // 4.5","solution":"static_cast<double>(a) / b","tip":"转换整个整数除法结果已经太晚；只转换 a 或 b。","explain":"先转换一个操作数，再执行浮点除法。"},"C03":{"name":"自增求值顺序","q":"消除 i++ + i++ 的未定义行为；按顺序保存两次旧值，再算 sum。","before":"int i=1;\n// 原写法：int sum=i++ + i++;\n","starter":"int sum=i++ + i++;","after":"\nstd::cout<<sum<<' '<<i; // 3 3","solution":"int left=i++;\nint right=i++;\nint sum=left+right;","tip":"先保存两次递增之前的值，再计算 sum。","explain":"把修改拆成顺序明确的语句，left=1、right=2、i=3。"},"C04":{"name":"悬垂引用","q":"返回局部对象的引用会悬垂。保持返回引用接口，修复生命周期。","before":"const int& getValue(){\n","starter":"const int value=42;\nreturn value;","after":"\n}\nint main(){std::cout<<getValue();}","solution":"static const int value=42;\nreturn value;","tip":"自动局部变量会销毁；static 局部对象活得更久。","explain":"static 局部对象在函数返回之后仍存在，引用有效。"},"C05":{"name":"函数替换宏","q":"宏 SQ(n++) 会重复修改 n。改写成内联函数 sq，让实参只求值一次。","before":"// 原宏 #define SQ(x) ((x)*(x))\n","starter":"#define sq(x) ((x)*(x))","after":"\nint main(){int n=2;int y=sq(n++);std::cout<<y<<' '<<n;}","solution":"inline int sq(int x){return x*x;}","tip":"形参只接收一次实参值，函数体使用 x。","explain":"函数只求值一次 n++，因此 y=4，n=3。"},"C06":{"name":"静态成员定义","q":"Counter 已声明 static int total。请在类外提供唯一定义。","before":"struct Counter{static int total;Counter(){++total;}};\n","starter":"static int Counter::total=0;","after":"\nint main(){Counter a,b;std::cout<<Counter::total;}","solution":"int Counter::total=0;","tip":"类外定义不重复写 static。","explain":"所有 Counter 对象使用同一个静态数据成员。"},"C07":{"name":"避免切片","q":"show 按值接收 Base 导致切片。改成保持动态绑定的参数形式。","before":"struct Base{virtual const char* name()const{return \"Base\";}};\nstruct Derived:Base{const char* name()const override{return \"Derived\";}};\n","starter":"void show(Base b)","after":"{std::cout<<b.name();}\nint main(){Derived d;show(d);} // Derived","solution":"void show(const Base& b)","tip":"传入 const Base&，不要拷贝基类子对象。","explain":"引用原来的 Derived 对象，虚调用可以到派生版本。"},"C08":{"name":"类模板偏特化","q":"编写 Box<T,T> 的偏特化，让相同类型组合的 tag=1。","before":"template<class T,class U>struct Box{static constexpr int tag=0;};\n","starter":"template<class T>struct Box<T>{static constexpr int tag=1;};","after":"\nstatic_assert(Box<int,int>::tag==1);\nstatic_assert(Box<int,double>::tag==0);","solution":"template<class T>struct Box<T,T>{static constexpr int tag=1;};","tip":"偏特化形状需写两个参数位置：Box<T,T>。","explain":"只有两个类型相同的组合命中偏特化。"},"C09":{"name":"迭代器失效","q":"删除 vector 中所有的 2：删除时接住 erase 的返回值，否则才 ++it。","before":"std::vector<int> v{2,3,2,4};\n","starter":"for(auto it=v.begin();it!=v.end();++it){if(*it==2)v.erase(it);}","after":"\n// 期待剩余 3、4；连续出现的 2 也要删掉","solution":"for(auto it=v.begin();it!=v.end();){if(*it==2)it=v.erase(it);else ++it;}","tip":"erase 会让旧迭代器失效。删除分支必须接住返回值。","explain":"只有未删除时才递增，避免使用失效迭代器。"},"C10":{"name":"lambda 生命周期","q":"返回引用捕获局部 n 的 lambda 会悬垂。改成安全的可修改闭包。","before":"std::function<int()> make(){int n=0;\n","starter":"return [&n]{return ++n;};","after":"\n}\n// f() 连续调用得到 1、2","solution":"return [n]() mutable {return ++n;};","tip":"捕获 n 的副本，并用 mutable 修改闭包中的副本。","explain":"闭包自带 n，函数返回后仍可安全使用。"},"C11":{"name":"异常对象切片","q":"按值捕获 std::exception 可能切片。改为规范的引用捕获。","before":"try{risky();}\n","starter":"catch(std::exception e)","after":"{std::cout<<e.what();}","solution":"catch(const std::exception& e)","tip":"常用 const T& 捕获异常。","explain":"避免基类对象拷贝及切片，保留多态。"},"C12":{"name":"async 执行策略","q":"显式选择 std::launch::async，避免默认策略可能 deferred。","before":"auto job=[]{return 42;};\nauto fut=","starter":"std::async(job)","after":";\nstd::cout<<fut.get();","solution":"std::async(std::launch::async,job)","tip":"在第一个参数写 std::launch::async。","explain":"明确指定异步启动策略，不依赖实现选择。"},"C13":{"name":"构建和调试","q":"链接 main.cpp 和 calc.cpp，使用 C++17 与 -g，输出 app。","before":"$ ","starter":"g++ main.cpp -o app","after":"\n// calc.cpp 定义了 main.cpp 调用的函数","solution":"g++ -std=c++17 -g main.cpp calc.cpp -o app","tip":"两个源文件都要编译；加上 -g 与 -std=c++17。","explain":"一起链接两个源文件，并保留调试符号。"}};
+const PRACTICE_TASKS={"C01-1":{"name":"include 缺失","q":"main.cpp 用了 std::cout 却报 'cout' was not declared。把缺的那行补在最上面。","before":"// 编译报错:'cout' was not declared\n","starter":"int main(){ std::cout << \"hi\"; }","after":"\n// 现在能编译了","solution":"#include <iostream>\nint main(){ std::cout << \"hi\"; }","tip":"std::cout 住在 <iostream> 里;include 要放在文件顶部。","explain":"include 把 iostream 的声明复印进来,std::cout 才有据可查。"},"C01-2":{"name":"头文件放声明","q":"counter.h 里写了函数体,两个 TU 各得一份定义,链接报 multiple definition。改成声明。","before":"// counter.h\n","starter":"int add(int a,int b){ return a+b; }","after":"\n// 函数体只在 counter.cpp","solution":"int add(int a,int b);","tip":"头文件放声明(带分号),函数体移到唯一一个 .cpp。","explain":"声明可以多份,定义只能一份——链接器按声明去别处找函数体。"},"C01-3":{"name":"extern 声明","q":"counter.cpp 已有 int g_count=5; 本文件也要用它,再写一份定义就两份了。改成只声明。","before":"// counter.cpp:int g_count = 5;\n// 本文件也要用它\n","starter":"int g_count=0;","after":"\n// 本 TU 使用的是 counter.cpp 那一份","solution":"extern int g_count;","tip":"extern = 只声明不定义——定义全局只有一份。","explain":"extern 声明让本 TU 引用别处的定义,改的是同一份。"},"C02-1":{"name":"sizeof 不求值","q":"sizeof(n++) 里的 ++ 根本不执行。改成自增真实发生,再量大小。","before":"int n = 2;\n","starter":"int m = sizeof(n++);","after":"\n// n 已加一,m 是 sizeof(int)","solution":"n++;\nint m = sizeof(n);","tip":"sizeof 的操作数不求值——想要副作用,把它写成独立语句。","explain":"n++ 先执行(n 变 3),sizeof(n) 编译期算出 4——两件事各归各位。"},"C02-2":{"name":"const 贴对位置","q":"p 要能改指向,但 p 所指的值不许改。把 const 贴到 * 的左边。","before":"int v = 1, w = 2;\n","starter":"const int* const p = &v;","after":"\n// p = &w; 可以;*p = 9; 不行","solution":"const int* p = &v;","tip":"const 在 * 左边管「所指的值」;贴在 p 身上(* 右边)才锁指针本身。","explain":"const int* p:指向常量的指针——p 能改指向,*p 不能赋值。"},"C02-3":{"name":"auto 引用遍历","q":"遍历大容器只读不拷贝。auto 按值每回合复制一个 string,改成 const 引用绑定。","before":"std::vector<std::string> words(1000, \"x\");\n","starter":"for (auto s : words) std::cout << s;","after":"\n// 零拷贝遍历","solution":"for (const auto& s : words) std::cout << s;","tip":"auto 按值拷贝;加 & 才是引用——只读再补 const。","explain":"const auto& 绑定元素本身,不发生 string 拷贝,也误改不了。"},"C03-1":{"name":"前缀自增","q":"第一行 a++ 是对的;第二行要「先加再用新值」,却交出旧值。改成前缀。","before":"int a = 5;\na++;\n","starter":"int b = a++;","after":"\n// b 应该是 7","solution":"int b = ++a;","tip":"后缀交旧值再加;前缀先加再交新值。","explain":"++a 先把 a 加到 7 再交出 7——b 拿到新值。"},"C03-2":{"name":"优先级补括号","q":"想判断「x 是偶数」。== 的优先级高于 &,现在算的是 x & (1==0)。补括号。","before":"int x = 4;\n","starter":"bool even = x & 1 == 0;","after":"\n// even 应为 true","solution":"bool even = (x & 1) == 0;","tip":"== 高于 &——想先做位与,把 (x & 1) 括起来。","explain":"括号先算 x&1 得 0,再与 0 比较——true。拿不准就全加括号。"},"C03-3":{"name":"短路守卫","q":"p 可能为空。|| 两边都会解引用,空指针先崩。改成 && 守卫:判空在前。","before":"Node* p = nullptr;\n","starter":"if (p->ok || p == nullptr)","after":"\n// p 为空时安全短路","solution":"if (p != nullptr && p->ok)","tip":"&& 左边先判空,右边才轮得到解引用。","explain":"p 为空时 && 左边为假直接短路,p->ok 不会执行——守卫式标准写法。"},"C04-1":{"name":"一行一个指针","q":"这行只声明出一个指针,q 是普通 int。拆成两行,让两个都是指针。","before":"// 想要两个 int*\n","starter":"int* p, q;","after":"\n// p 和 q 都是指针","solution":"int* p;\nint* q;","tip":"* 只贴着它旁边的名字——int* a, b 的 b 是普通 int。","explain":"一行一个声明最稳:各自带 *。声明阅读法的经典坑。"},"C04-2":{"name":"sizeof 量箱子","q":"buf 想装下 \"abcd\" 连同结尾 \\0。4 只装 4 个字符。用 sizeof 量字面量。","before":"const char* src = \"abcd\";\n","starter":"char buf[4];","after":"\n// sizeof(\"abcd\") 是 5,连 \\0 一起算","solution":"char buf[sizeof \"abcd\"];","tip":"字面量自带结尾 \\0:\"abcd\" 占 5 字节;strlen 数到 \\0 是 4,不含它。","explain":"sizeof 量箱子(含 \\0),strlen 数内容——这里需要的是箱子。"},"C04-3":{"name":"指针加法单位","q":"想跳过 3 个 int。指针加法的单位是元素不是字节,这行却乘了 sizeof。直接写 p+3。","before":"int arr[8]; int* p = arr;\n","starter":"int* q = p + 3 * sizeof(int);","after":"\n// q 指向 arr[3]","solution":"int* q = p + 3;","tip":"指针 +1 的单位是它指向的类型——int* 加 1 跳一个 int。","explain":"p+3 前进 3 个元素;乘 sizeof 反而跳过头了。"},"C05-1":{"name":"宏参数加括号","q":"宏参数没括号,SQ(1+2) 展开成 1+2*1+2。给参数套上括号。","before":"// 想要 (1+2)*(1+2) = 9\n","starter":"#define SQ(x) x*x","after":"\n// 现在展开是 ((1+2))*((1+2))","solution":"#define SQ(x) ((x)*(x))","tip":"宏是文本复印:参数出现几次就要括几层——外层一层也不能少。","explain":"((x)*(x)) 让展开先算参数再相乘——9。"},"C05-2":{"name":"#if 看值","q":"想「值为 1 时才编译」。#ifdef 只认名字不认值。换 #if。","before":"#define DEBUG_MODE 0\n","starter":"#ifdef DEBUG_MODE\nlog();\n#endif","after":"\n// DEBUG_MODE 为 0,log 不进程序","solution":"#if DEBUG_MODE\nlog();\n#endif","tip":"#ifdef 问「名字定义过吗」;#if 才求值——0 就是 0。","explain":"#if DEBUG_MODE 用它的值 0——log 被裁掉。"},"C05-3":{"name":"宏换 constexpr","q":"MAX 是宏:没类型、没作用域、实参求值两次。换成 constexpr 函数。","before":"// 想要类型安全又能在编译期算\n","starter":"#define MAX(a,b) ((a)>(b)?(a):(b))","after":"\n// 用法等价:maxv(3,5)","solution":"constexpr int maxv(int a,int b){ return a>b?a:b; }","tip":"constexpr 函数有类型、有作用域、可调试——实参只求值一次。","explain":"编译期算结果,行为与宏一致,坑全消失。"},"C06-1":{"name":"const 成员初始化","q":"Widget 有 const 成员,构造函数体里赋值编不过。写成员初始化列表。","before":"struct Widget { const int id; };\n","starter":"Widget(){ id = 7; }","after":"\n// 构造时直接初始化 id","solution":"Widget() : id(7) {}","tip":"const 成员不能赋值,只能在初始化列表里出生。","explain":"id(7) 在进入函数体前完成初始化——const 成员的唯一路径。"},"C06-2":{"name":"explicit 拦转换","q":"int 到 Length 的隐式转换太宽松。给单参构造加 explicit。","before":"// Length l = 100; 现在能编,想拦住它\n","starter":"struct Length { Length(int m); };","after":"\n// 只许 Length l(100);","solution":"struct Length { explicit Length(int m); };","tip":"explicit 拦下拷贝初始化的隐式转换;直接初始化照常可用。","explain":"Length l = 100 变编译错误,Length l(100) 照常——转换权收回。"},"C06-3":{"name":"深拷贝构造","q":"类管着 new 出来的资源,默认拷贝是浅拷贝,析构双删。补上深拷贝构造。","before":"struct Holder { int* p; Holder():p(new int(1)){} ~Holder(){delete p;} };\n","starter":"Holder(const Holder& o) : p(o.p) {}","after":"\n// 两个 Holder 各管各的资源","solution":"Holder(const Holder& o) : p(new int(*o.p)) {}","tip":"浅拷贝复制的是指针本身;深拷贝要 new 一份新的,再把值抄过来。","explain":"p(new int(*o.p)) 分配新内存并拷值——析构各删各的,不再双删。"},"C07-1":{"name":"基类初始化","q":"Base 没有默认构造,派生构造必须把参数转交给基类。写基类初始化。","before":"struct Base { explicit Base(int v); };\nstruct D : Base {\n","starter":"D(int x) { }","after":"\n};","solution":"D(int x) : Base(x) {}","tip":"基类子对象在成员之前构造——参数经初始化列表交给基类构造。","explain":"Base(x) 在初始化列表里调用基类构造,不经过赋值。"},"C07-2":{"name":"补上 virtual","q":"派生的 name 想覆盖基类,基类却没写 virtual——现在只是隐藏。补上 virtual 与 override。","before":"struct B { const char* name() const { return \"B\"; } };\nstruct D : B { const char* name() const override { return \"D\"; } };\n","starter":"// 编译报错:override 用于未覆盖的函数","after":"\n// 通过基类引用调用到 D 的版本","solution":"struct B { virtual const char* name() const { return \"B\"; } };\nstruct D : B { const char* name() const override { return \"D\"; } };","tip":"没有 virtual 就没有虚表——override 只能在真覆盖时使用。","explain":"基类函数标 virtual,派生 override 才合法,动态绑定生效。"},"C07-3":{"name":"using 引入重载","q":"派生的 f(double) 把基类的 f(int) 整组隐藏了。用 using 把基组搬回来。","before":"struct B { void f(int) {} void f(double) {} };\n","starter":"struct D : B { void f(double) {} };","after":"\n// d.f(1) 现在也能找到 f(int)","solution":"struct D : B { using B::f; void f(double) {} };","tip":"名字查找按作用域整组遮挡:派生一声明 f,基类整组 f 都看不见——using 搬回来。","explain":"using B::f 把基组引入派生作用域,重载决议两套都参与。"},"C08-1":{"name":"显式模板实参","q":"两个实参类型不同(4 与 4.2),T 推不出唯一结论。显式点名 T。","before":"template<class T> T tmax(T a, T b);\n","starter":"int r = tmax(4, 4.2);","after":"\n// 显式指定 T 后按规则转换","solution":"double r = tmax<double>(4, 4.2);","tip":"T 只能推一个:实参类型不一致时自己点名 T,让转换接手。","explain":"tmax<double> 把 4 转成 4.2 参与比较——显式实参解围推导失败。"},"C08-2":{"name":"模板定义进头文件","q":"模板函数体留在 .cpp,别的 TU 只看到声明——链接报 undefined reference。定义搬进头文件。","before":"// util.h——使用它的 TU 需要看到完整定义\n","starter":"int twice(int x);","after":"\n// 定义与声明同处,实例化就地完成","solution":"template<class T> T twice(T x){ return x*2; }","tip":"模板靠「使用时现场造代码」豁免 ODR——定义必须让使用它的 TU 看得见。","explain":"定义进头文件,使用处当场实例化——不再有链接期找不到的实例。"},"C08-3":{"name":"using 别名模板","q":"C++ 没有 template typedef。用 using 别名模板实现同样效果。","before":"// 想要 Vec<int>、Vec<double> 都能用\n","starter":"typedef std::vector<T> Vec;","after":"\n// Vec 是别名模板","solution":"template<class T> using Vec = std::vector<T>;","tip":"typedef 带不了模板参数;using 别名模板是正解(C++11 起)。","explain":"Vec<T> 即 std::vector<T> 的别名——参数留到使用时再定。"},"C09-1":{"name":"先 reserve","q":"知道要装 1000 个元素。逐个 push_back 会反复搬家。先预留容量。","before":"// 想避免反复重新分配\n","starter":"std::vector<int> v;\nfor (int i=0;i<1000;++i) v.push_back(i);","after":"\n// 一次分配到位","solution":"std::vector<int> v;\nv.reserve(1000);\nfor (int i=0;i<1000;++i) v.push_back(i);","tip":"reserve 只扩容量不动 size——一次给够,搬家只此一次。","explain":"reserve(1000) 后 push_back 不再触发重新分配,旧引用全程有效。"},"C09-2":{"name":"insert 不覆盖","q":"map 已有键 k,想「有则不动,无则插入」。operator[] 会覆盖旧值。改用 insert。","before":"std::map<std::string,int> m{{\"k\", 9}};\n","starter":"m[\"k\"] = 1;","after":"\n// m[\"k\"] 仍是 9","solution":"m.insert({\"k\", 1});","tip":"operator[] 无条件赋值;insert 遇到已有键直接放弃,旧值保留。","explain":"insert 返回 pair 告诉你插没插进去——旧值 9 安然无恙。"},"C09-3":{"name":"erase 保命惯用法","q":"边遍历边删除:erase 之后旧迭代器已失效,++ 它是 UB。接住返回值。","before":"std::vector<int> v{2,3,2,4};\n","starter":"for(auto it=v.begin();it!=v.end();++it){if(*it==2)v.erase(it);}","after":"\n// 期待剩余 3、4;连续的 2 也要删掉","solution":"for(auto it=v.begin();it!=v.end();){if(*it==2)it=v.erase(it);else ++it;}","tip":"erase 返回下一个有效迭代器——删除分支接住它,没删才 ++。","explain":"只有未删除时才递增,避免使用失效迭代器。"},"C10-1":{"name":"引用捕获改遥控","q":"f() 要返回最新的 n。按值捕获定格在创建那一刻。改成引用捕获。","before":"int n = 1;\nn = 3;\n","starter":"auto f = [=]{ return n; };","after":"\n// f() 应返回 3","solution":"auto f = [&]{ return n; };","tip":"[=] 是创建那一刻的快照;[&] 始终读原变量。","explain":"[&] 拿到遥控器——调用时读到 3。"},"C10-2":{"name":"static 不捕获","q":"lambda 里 ++st(st 是 static)。有人画蛇添足写成捕获 [st]。修正捕获列表。","before":"static int st = 0;\n","starter":"auto f = [st]{ ++st; };","after":"\n// ++st 落在原体上","solution":"auto f = []{ ++st; };","tip":"static 不进捕获列表——函数体直接用原体,连 mutable 都不需要。","explain":"捕获列表对 static 无效;删掉它,++ 落在真 st 上。"},"C10-3":{"name":"按值捕获防悬垂","q":"g 返回引用捕获局部的 lambda——悬垂 UB。改按值捕获。","before":"// 调用 g(5)() 是未定义行为\n","starter":"auto g(int x){ return [&]{ return x; }; }","after":"\n// 拷贝随闭包逃逸,安全","solution":"auto g(int x){ return [x]{ return x; }; }","tip":"形参 x 的栈帧随返回销毁;按值捕获把拷贝装进闭包对象,走哪带哪。","explain":"[x] 让闭包自带一份 x——返回后照常可用。"},"C11-1":{"name":"裸 new 换 RAII","q":"裸 new 配 delete,岔路必漏。改成 make_unique,删掉手动释放。","before":"// 多分支函数,提前 return 也别漏\n","starter":"Res* p = new Res();\ndelete p;","after":"\n// 资源进对象,任何出口都安全","solution":"auto p = std::make_unique<Res>();","tip":"RAII:构造获取析构释放——释放从代码行挪到作用域。","explain":"unique_ptr 析构替你 delete;early return、异常都不再漏。"},"C11-2":{"name":"拷贝换 move","q":"unique_ptr 禁拷贝,这行编不过。想移交所有权,用 std::move。","before":"auto a = std::make_unique<int>(1);\n","starter":"auto b = a;","after":"\n// a 变空,b 接手","solution":"auto b = std::move(a);","tip":"独占指针不可拷贝;移交用 move——源指针变空但有效。","explain":"move 转移所有权:b 持有对象,a 变成可判空的空指针。"},"C11-3":{"name":"再盖一次章","q":"r 是命名的右值引用变量,本身是左值。想真移动,在使用处再盖一次章。","before":"Tracer&& r = std::move(s);\n","starter":"Tracer t{r};","after":"\n// 这次是 MOVE","solution":"Tracer t{std::move(r)};","tip":"有名字 = 左值;std::move(r) 把章重新盖到这个表达式上。","explain":"不经手变量才直通移动;经手了,使用处再 move 一次。"},"C12-1":{"name":"补上 join","q":"线程对象出作用域时还 joinable 就是 terminate。结束前补 join。","before":"void run(){\n    std::thread t(job);\n","starter":"    // 少了什么?\n}","after":"}","solution":"    t.join();\n}","tip":"join / detach 二选一;析构仍 joinable = terminate。","explain":"join 等任务收工并回收——析构时 joinable 已假,安全出作用域。"},"C12-2":{"name":"volatile 换 atomic","q":"并发计数用 volatile 不算同步——数据竞争照旧。换成 atomic。","before":"// 两线程各 ++ 一万次\n","starter":"volatile int n = 0;","after":"\n// 恒 20000","solution":"std::atomic<int> n{0};","tip":"volatile 只禁编译器缓存;原子性靠 atomic 或 mutex。","explain":"atomic 的 ++ 是原子 read-modify-write——更新丢不掉。"},"C12-3":{"name":"检查焊进临界区","q":"empty 查一次、取再锁一次——中间有空档。把检查焊进同一临界区。","before":"std::queue<int> q; std::mutex m;\n","starter":"if (!q.empty()) { std::lock_guard<std::mutex> g(m); take(); }","after":"\n// 先锁,再查,再取","solution":"std::lock_guard<std::mutex> g(m); if (!q.empty()) take();","tip":"empty 的结论出锁就过期——检查与操作必须一个临界区。","explain":"先锁再查再取:两步之间没人插队。"},"C13-1":{"name":"条件断点","q":"想在 f 入口仅当 x==3 时停下。位置后面跟 if 条件。","before":"// gdb 里\n","starter":"break f 3","after":"\n// 只在 x==3 那次停下","solution":"break f if x==3","tip":"数字跟在位置后会被当成名字的一部分;条件断点是位置 + if 条件。","explain":"break f if x==3——真机只在 x==3 停。"},"C13-2":{"name":"打开 core 转储","q":"崩溃没生成 core——转储上限是 0。Shell 里打开它。","before":"// 崩溃后没有 core 文件\n","starter":"gdb ./crash","after":"\n// 下次崩溃就会留下 core","solution":"ulimit -c unlimited","tip":"core 要靠 Shell 的 ulimit 先开闸;配上 -g 编译才能还原行号。","explain":"ulimit -c unlimited 之后,崩溃进程才会留下现场。"},"C13-3":{"name":"判空用断头线","q":"判空失败后解引用还在跑。判空必须断头——换 ASSERT。","before":"// 下一行要解引用 p\n","starter":"EXPECT_NE(p, nullptr);","after":"\n// 判空失败就到此为止","solution":"ASSERT_NE(p, nullptr);","tip":"后续代码依赖这次检查结果时用 ASSERT——失败立刻退出当前用例函数。","explain":"ASSERT 是断头线:判空失败,解引用不会再执行。"},"C01":{"name":"修复头文件重复定义","q":"counter.h 同时被 main.cpp 与 worker.cpp 包含。请将原本重复的变量定义改为头文件中的 extern 声明和 counter.cpp 中的唯一定义，按这两个顺序填写。","before":"// counter.h（第一行）\n// counter.cpp（第二行）\n","starter":"int counter=0;\nint counter=0;","after":"\n// 头文件只放声明；源文件仅定义一次","solution":"extern int counter;\nint counter=0;","tip":"头文件 extern int counter;，源文件 int counter = 0;。","explain":"不同翻译单元都可看到同一声明，链接时只有 counter.cpp 的一份定义。"},"C02":{"name":"转换时机","q":"让 9 / 2 得到 4.5，而不是 4。你必须在除法之前做类型转换。","before":"int a=9,b=2;\ndouble result =","starter":"static_cast<double>(a / b)","after":";\nstd::cout<<result; // 4.5","solution":"static_cast<double>(a) / b","tip":"转换整个整数除法结果已经太晚；只转换 a 或 b。","explain":"先转换一个操作数，再执行浮点除法。"},"C03":{"name":"自增求值顺序","q":"消除 i++ + i++ 的未定义行为；按顺序保存两次旧值，再算 sum。","before":"int i=1;\n// 原写法：int sum=i++ + i++;\n","starter":"int sum=i++ + i++;","after":"\nstd::cout<<sum<<' '<<i; // 3 3","solution":"int left=i++;\nint right=i++;\nint sum=left+right;","tip":"先保存两次递增之前的值，再计算 sum。","explain":"把修改拆成顺序明确的语句，left=1、right=2、i=3。"},"C04":{"name":"悬垂引用","q":"返回局部对象的引用会悬垂。保持返回引用接口，修复生命周期。","before":"const int& getValue(){\n","starter":"const int value=42;\nreturn value;","after":"\n}\nint main(){std::cout<<getValue();}","solution":"static const int value=42;\nreturn value;","tip":"自动局部变量会销毁；static 局部对象活得更久。","explain":"static 局部对象在函数返回之后仍存在，引用有效。"},"C05":{"name":"函数替换宏","q":"宏 SQ(n++) 会重复修改 n。改写成内联函数 sq，让实参只求值一次。","before":"// 原宏 #define SQ(x) ((x)*(x))\n","starter":"#define sq(x) ((x)*(x))","after":"\nint main(){int n=2;int y=sq(n++);std::cout<<y<<' '<<n;}","solution":"inline int sq(int x){return x*x;}","tip":"形参只接收一次实参值，函数体使用 x。","explain":"函数只求值一次 n++，因此 y=4，n=3。"},"C06":{"name":"静态成员定义","q":"Counter 已声明 static int total。请在类外提供唯一定义。","before":"struct Counter{static int total;Counter(){++total;}};\n","starter":"static int Counter::total=0;","after":"\nint main(){Counter a,b;std::cout<<Counter::total;}","solution":"int Counter::total=0;","tip":"类外定义不重复写 static。","explain":"所有 Counter 对象使用同一个静态数据成员。"},"C07":{"name":"避免切片","q":"show 按值接收 Base 导致切片。改成保持动态绑定的参数形式。","before":"struct Base{virtual const char* name()const{return \"Base\";}};\nstruct Derived:Base{const char* name()const override{return \"Derived\";}};\n","starter":"void show(Base b)","after":"{std::cout<<b.name();}\nint main(){Derived d;show(d);} // Derived","solution":"void show(const Base& b)","tip":"传入 const Base&，不要拷贝基类子对象。","explain":"引用原来的 Derived 对象，虚调用可以到派生版本。"},"C08":{"name":"类模板偏特化","q":"编写 Box<T,T> 的偏特化，让相同类型组合的 tag=1。","before":"template<class T,class U>struct Box{static constexpr int tag=0;};\n","starter":"template<class T>struct Box<T>{static constexpr int tag=1;};","after":"\nstatic_assert(Box<int,int>::tag==1);\nstatic_assert(Box<int,double>::tag==0);","solution":"template<class T>struct Box<T,T>{static constexpr int tag=1;};","tip":"偏特化形状需写两个参数位置：Box<T,T>。","explain":"只有两个类型相同的组合命中偏特化。"},"C09":{"name":"迭代器失效","q":"删除 vector 中所有的 2：删除时接住 erase 的返回值，否则才 ++it。","before":"std::vector<int> v{2,3,2,4};\n","starter":"for(auto it=v.begin();it!=v.end();++it){if(*it==2)v.erase(it);}","after":"\n// 期待剩余 3、4；连续出现的 2 也要删掉","solution":"for(auto it=v.begin();it!=v.end();){if(*it==2)it=v.erase(it);else ++it;}","tip":"erase 会让旧迭代器失效。删除分支必须接住返回值。","explain":"只有未删除时才递增，避免使用失效迭代器。"},"C10":{"name":"lambda 生命周期","q":"返回引用捕获局部 n 的 lambda 会悬垂。改成安全的可修改闭包。","before":"std::function<int()> make(){int n=0;\n","starter":"return [&n]{return ++n;};","after":"\n}\n// f() 连续调用得到 1、2","solution":"return [n]() mutable {return ++n;};","tip":"捕获 n 的副本，并用 mutable 修改闭包中的副本。","explain":"闭包自带 n，函数返回后仍可安全使用。"},"C11":{"name":"异常对象切片","q":"按值捕获 std::exception 可能切片。改为规范的引用捕获。","before":"try{risky();}\n","starter":"catch(std::exception e)","after":"{std::cout<<e.what();}","solution":"catch(const std::exception& e)","tip":"常用 const T& 捕获异常。","explain":"避免基类对象拷贝及切片，保留多态。"},"C12":{"name":"async 执行策略","q":"显式选择 std::launch::async，避免默认策略可能 deferred。","before":"auto job=[]{return 42;};\nauto fut=","starter":"std::async(job)","after":";\nstd::cout<<fut.get();","solution":"std::async(std::launch::async,job)","tip":"在第一个参数写 std::launch::async。","explain":"明确指定异步启动策略，不依赖实现选择。"},"C13":{"name":"构建和调试","q":"链接 main.cpp 和 calc.cpp，使用 C++17 与 -g，输出 app。","before":"$ ","starter":"g++ main.cpp -o app","after":"\n// calc.cpp 定义了 main.cpp 调用的函数","solution":"g++ -std=c++17 -g main.cpp calc.cpp -o app","tip":"两个源文件都要编译；加上 -g 与 -std=c++17。","explain":"一起链接两个源文件，并保留调试符号。"}};
 function stepBoard(st){
   if(st.lines)return st.lines.join("\n");
   if(st.q){
@@ -5082,6 +5148,7 @@ function validateRepair(id,answer){
  case "C11":return /^catch\((conststd::exception|std::exceptionconst)&e\)$/.test(c);
  case "C12":return /^std::async\(std::launch::async,job\);?$/.test(c);
  case "C13":return /^g\+\+/.test(answer.trim())&&/(?:^|\s)-g(?:\s|$)/.test(answer)&&/(?:^|\s)-std=c\+\+17(?:\s|$)/.test(answer)&&/\bmain\.cpp\b/.test(answer)&&/\bcalc\.cpp\b/.test(answer)&&/-o\s+app(?:\s|$)/.test(answer);
+ case "C01-1":return /^#include<iostream>intmain\(\)\{std::cout<<"hi";\}$/.test(c); case "C01-2":return /^intadd\(inta,intb\);$/.test(c); case "C01-3":return /^externintg_count;$/.test(c); case "C02-1":return /^n\+\+;intm=sizeof\(n\);$/.test(c); case "C02-2":return /^constint\*p=&v;$/.test(c); case "C02-3":return /^for\(constauto&s:words\)std::cout<<s;$/.test(c); case "C03-1":return /^intb=\+\+a;$/.test(c); case "C03-2":return /^booleven=\(x&1\)==0;$/.test(c); case "C03-3":return /^if\(p!=nullptr&&p->ok\)$/.test(c); case "C04-1":return /^int\*p;int\*q;$/.test(c); case "C04-2":return /^charbuf\[sizeof"abcd"\];$/.test(c); case "C04-3":return /^int\*q=p\+3;$/.test(c); case "C05-1":return /^#defineSQ\(x\)\(\(x\)\*\(x\)\)$/.test(c); case "C05-2":return /^#ifDEBUG_MODElog\(\);#endif$/.test(c); case "C05-3":return /^constexprintmaxv\(inta,intb\)\{returna>b\?a:b;\}$/.test(c); case "C06-1":return /^Widget\(\):id\(7\)\{\}$/.test(c); case "C06-2":return /^structLength\{explicitLength\(intm\);\};$/.test(c); case "C06-3":return /^Holder\(constHolder&o\):p\(newint\(\*o\.p\)\)\{\}$/.test(c); case "C07-1":return /^D\(intx\):Base\(x\)\{\}$/.test(c); case "C07-2":return /^structB\{virtualconstchar\*name\(\)const\{return"B";\}\};structD:B\{constchar\*name\(\)constoverride\{return"D";\}\};$/.test(c); case "C07-3":return /^structD:B\{usingB::f;voidf\(double\)\{\}\};$/.test(c); case "C08-1":return /^doubler=tmax<double>\(4,4\.2\);$/.test(c); case "C08-2":return /^template<classT>Ttwice\(Tx\)\{returnx\*2;\}$/.test(c); case "C08-3":return /^template<classT>usingVec=std::vector<T>;$/.test(c); case "C09-1":return /std::vector<int>v;v\.reserve\(1000\);for\(inti=0;i<1000;\+\+i\)v\.push_back\(i\);/.test(c); case "C09-2":return /^m\.insert\(\{"k",1\}\);$/.test(c); case "C09-3":return /for\(autoit=v\.begin\(\);it!=v\.end\(\);\).*erase\(it\);else\+\+it;/.test(c); case "C10-1":return /^autof=\[&\]\{returnn;\};$/.test(c); case "C10-2":return /^autof=\[\]\{\+\+st;\};$/.test(c); case "C10-3":return /^autog\(intx\)\{return\[x\]\{returnx;\};\}$/.test(c); case "C11-1":return /^autop=std::make_unique<Res>\(\);$/.test(c); case "C11-2":return /^autob=std::move\(a\);$/.test(c); case "C11-3":return /^Tracert\{std::move\(r\)\};$/.test(c); case "C12-1":return /^t\.join\(\);\}$/.test(c); case "C12-2":return /^std::atomic<int>n\{0\};$/.test(c); case "C12-3":return /^std::lock_guard<std::mutex>g\(m\);if\(!q\.empty\(\)\)take\(\);$/.test(c); case "C13-1":return /^breakfifx==3$/.test(c); case "C13-2":return /^ulimit-cunlimited$/.test(c); case "C13-3":return /^ASSERT_NE\(p,nullptr\);$/.test(c);
  default:return false;
  }
 }
@@ -5101,6 +5168,7 @@ function renderRepairStep(st){
  stepSpeakInstant("先亲自编辑程序，再检查关键结构。这里不伪装成 C++ 编译器。");
  check.onclick=()=>{
   const code=input.value;
+  let unlocked=false;
   if(!validateRepair(st.id,code)){
    failed++;sfx("bad");
    if(!CUR.review&&failed===1){markLessonAssisted();noteMiscon("修复前："+t.starter.slice(0,60),"实际规则："+t.explain,"复习提示："+t.tip,{chapter:CUR.chapter,lesson:ls.id})}
@@ -5112,19 +5180,18 @@ function renderRepairStep(st){
    SAVE.codeTasks=SAVE.codeTasks||{};
    if(!SAVE.codeTasks[st.id]){SAVE.codeTasks[st.id]={assisted:!!CUR.assisted[CUR.step],code};addXP(4)}
    mUp(ls.kp,CUR.assisted[CUR.step]?2:3);
-   const lv=LEVELS[CUR.chapter],already=!!SAVE.done[lv.id];
-   SAVE.done[lv.id]=Math.max(SAVE.done[lv.id]||0,CUR.assisted[CUR.step]?2:3);
-   SAVE.chapterChallenges=SAVE.chapterChallenges||{};
-   SAVE.chapterChallenges[lv.id]={code,assisted:!!CUR.assisted[CUR.step],completedAt:Date.now()};
-   save();if(!already)addXP(20);
+   save();
+   unlocked=tryUnlockChapter(CUR.chapter);
   }
   setLessonBoard(t.before+"\n"+code+"\n"+t.after+"\n\n"+t.explain);
-  explain(true,"结构核验通过！"+t.explain+" 本章已通过，下一章已解锁。如采用其他等价写法，请在本机用 g++ 验证。");
+  explain(true,"结构核验通过！"+t.explain+(unlocked?" 本章 4 段实战全部完成，下一章已解锁。如采用其他等价写法，请在本机用 g++ 验证。":" 本小节通过——本章 4 段实战还没全部完成，全部完成后章节即解锁。"));
   const next=document.createElement("button");next.className="btn";next.textContent="继续 ▶";next.onclick=()=>{sfx("page");CUR.step++;renderStep()};fb.appendChild(next);
-  const advance=document.createElement("button");advance.className="btn ghost";
-  advance.style.marginLeft="8px";advance.textContent=CUR.chapter+1<LEVELS.length?"直接下一章 ▶":"查看毕业典礼 ▶";
-  advance.onclick=()=>{if(CUR.chapter+1<LEVELS.length)renderLessonHub(CUR.chapter+1);else renderCeremony()};
-  fb.appendChild(advance);
+  if(unlocked){
+   const advance=document.createElement("button");advance.className="btn ghost";
+   advance.style.marginLeft="8px";advance.textContent=CUR.chapter+1<LEVELS.length?"直接下一章 ▶":"查看毕业典礼 ▶";
+   advance.onclick=()=>{if(CUR.chapter+1<LEVELS.length)renderLessonHub(CUR.chapter+1);else renderCeremony()};
+   fb.appendChild(advance);
+  }
  };
  show.onclick=()=>{if(!CUR.review)markLessonAssisted();input.value=t.solution;show.hidden=true;explain(false,"参考实现已填入。请看懂后再点击验证。")};
 }
